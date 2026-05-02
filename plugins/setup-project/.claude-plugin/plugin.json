@@ -1,0 +1,9 @@
+{
+  "name": "setup-project",
+  "description": "Optional project bootstrap for the review-chain workflow: writes a TODO.md template, configures the orchestrator as the default agent, and adds a generic Working-With-Claude-Code section to CLAUDE.md. Take it or leave it — the review-chain agents work without it.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Randall Nortman"
+  },
+  "license": "MIT"
+}

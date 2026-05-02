@@ -1,0 +1,20 @@
+{
+  "name": "rnortman-plugins",
+  "owner": {
+    "name": "Randall Nortman"
+  },
+  "plugins": [
+    {
+      "name": "review-chain",
+      "source": "./plugins/review-chain",
+      "version": "0.1.0",
+      "description": "Adversarial review-chain workflow: orchestrator + specialist reviewers + judge, file-based artifacts, one-shot agents."
+    },
+    {
+      "name": "setup-project",
+      "source": "./plugins/setup-project",
+      "version": "0.1.0",
+      "description": "Optional bootstrap for review-chain: TODO.md template, orchestrator as default agent, generic CLAUDE.md section."
+    }
+  ]
+}
