@@ -7,6 +7,7 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 ### Unreleased
 
 - **orchestrator**: relay user-supplied subagent instructions verbatim — no elaboration or rephrasing.
+- **implementer**: sharper definition of "small" for incremental-mode draft scope — one semantic change per increment, replacing the prior file-count guideline. Three concrete tests (one-sentence-no-"and", ship-half-still-coherent, multi-file-only-for-same-change).
 
 ### 0.1.1 — 2026-05-02
 

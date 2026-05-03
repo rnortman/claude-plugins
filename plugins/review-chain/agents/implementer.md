@@ -69,7 +69,12 @@ Multiple as-small-as-reasonable implementation increments. One log across increm
 
 Steps:
 1. **First turn, batched:** `Read` design + requirements + log (if it exists), in parallel. **No source reads, no `Grep`, no `ls` yet.**
-2. `Edit` log to append a **draft scope** for this increment: small, ideally testable in isolation; one file or a few related files is a good start. The draft decides what you explore next — not the other way around. Revise on the fly if needed; **replace** with the shipped scope at step 6. If log doesn't exist: this is the first increment.
+2. `Edit` log to append a **draft scope** for this increment. **Small = one semantic change.** Tests:
+   - One-sentence description with no "and" / comma-list joining distinct operations. "Remove X, replace Y, drop Z" → three increments, not one.
+   - You could ship one half without the other and the remainder would still be coherent standalone next work.
+   - Multi-file is fine when files implement *the same* change (impl + its tests + a call site); not fine when each file is a different change.
+
+   Bias smaller. The draft decides what you explore next — not the other way around. Revise on the fly; **replace** with the shipped scope at step 6. If log doesn't exist: this is the first increment.
 3. Explore source only as the chosen scope requires.
 4. Implement. Scope growing? Shrink mid-flight; don't push through.
 5. Build/test changed modules. Whole-repo green not required. Module tests pass if possible. Build errors blocking out-of-scope dependents OK.
