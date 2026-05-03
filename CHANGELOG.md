@@ -8,6 +8,7 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 - **orchestrator**: relay user-supplied subagent instructions verbatim — no elaboration or rephrasing.
 - **implementer**: sharper definition of "small" for incremental-mode draft scope — one semantic change per increment, replacing the prior file-count guideline. Three concrete tests (one-sentence-no-"and", ship-half-still-coherent, multi-file-only-for-same-change).
+- **orchestrator**: stronger batching language for independent subagent spawns. General "batch independent spawns into one assistant message" rule in `## Spawning`; pre-pass and deep-review steps now explicitly say "one assistant message, N `Agent` calls in parallel"; matching prohibition added to `## Never`. Was: orchestrator routinely serialized parallel reviewer fans.
 
 ### 0.1.1 — 2026-05-02
 

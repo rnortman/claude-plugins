@@ -22,7 +22,7 @@ Agent({
 })
 ```
 
-Parallel spawns: multiple Agent calls in one turn.
+**Batch independent spawns into one assistant message.** Whenever a step lists multiple subagents with no data dependency between them, every `Agent` call goes in the *same* turn. Sequential only when call B's input depends on call A's reply (responder needs reviewer notes paths; judge needs notes + dispositions). Serializing independent fans re-pays the input-token cost per turn and stretches wall time for nothing.
 
 ### Model
 
@@ -106,7 +106,7 @@ Replaces 16–17. Log path: `implementation-log.md`. No reviews between incremen
 - `done` → pre-pass review.
 
 ### pre-pass review
-20. Parallel spawn:
+20. **One assistant message, both `Agent` calls in parallel:**
     - `slop-reviewer`: base, HEAD, target `notes-prepass-slop.md`.
     - `scope-reviewer`: base, HEAD, design path, implementation-report path, target `notes-prepass-scope.md`.
 21. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, base, HEAD, both notes paths, target `dispositions-prepass.md`.
@@ -115,7 +115,7 @@ Replaces 16–17. Log path: `implementation-log.md`. No reviews between incremen
 24. APPROVED → deep. ESCALATE → surface.
 
 ### deep review
-25. Parallel spawn (7): `error-handling-reviewer`, `correctness-reviewer`, `security-reviewer`, `test-reviewer`, `reuse-reviewer`, `quality-reviewer`, `efficiency-reviewer`. Each: base, HEAD, design path, target `notes-deep-<reviewer>.md`.
+25. **One assistant message, all 7 `Agent` calls in parallel:** `error-handling-reviewer`, `correctness-reviewer`, `security-reviewer`, `test-reviewer`, `reuse-reviewer`, `quality-reviewer`, `efficiency-reviewer`. Each: base, HEAD, design path, target `notes-deep-<reviewer>.md`.
 26. Spawn `implementer` respond round 1. Pass: design path, working dir, base, HEAD, all 7 notes paths, target `dispositions-deep.md`.
 27. Spawn `judge` round 1. Pass: 7 notes paths, dispositions path, working dir, base, HEAD, design path, target `judge-verdict-deep.md`.
 28. REWORK → fresh implementer rework + fresh judge round 2.
@@ -169,6 +169,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Squash or push without explicit user approval (separately).
 - Force-push, any context.
 - Elaborate or rephrase user-supplied instructions for a subagent. Quote verbatim or ask.
+- Spawn a parallel-fan reviewer set across multiple assistant messages. One message, multiple `Agent` calls.
 
 ## Style
 
