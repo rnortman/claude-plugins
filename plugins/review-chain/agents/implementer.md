@@ -68,8 +68,27 @@ Inputs: design path, requirements path, working dir, target log path, base commi
 Multiple as-small-as-reasonable implementation increments. One log across increments. Each invocation appends.
 
 Steps:
-1. **First turn, batched:** `Read` design + requirements + log (if it exists), in parallel. **No source reads, no `Grep`, no `ls` yet.**
-2. `Edit` log to append a **draft scope** for this increment. **Small = one semantic change.** Tests:
+
+Your first two turns are fixed. Literal shape:
+
+```
+[turn 1]
+<function_calls>
+<invoke name="Read">…design…</invoke>
+<invoke name="Read">…requirements…</invoke>
+<invoke name="Read">…log (if exists)…</invoke>
+</function_calls>
+
+[turn 2]
+<function_calls>
+<invoke name="Edit">…log: append draft scope…</invoke>
+</function_calls>
+```
+
+No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: grepping or reading source to "orient" before the log Edit. The design IS your fully sufficient orientation for draft scope.*
+
+1. **Turn 1 — parallel `Read`s of input docs only.**
+2. **Turn 2 — single `Edit` appending draft scope to log.** **Small = one semantic change.** Tests:
    - One-sentence description with no "and" / comma-list joining distinct operations. "Remove X, replace Y, drop Z" → three increments, not one.
    - You could ship one half without the other and the remainder would still be coherent standalone next work.
    - Multi-file is fine when files implement *the same* change (impl + its tests + a call site); not fine when each file is a different change.
@@ -153,7 +172,7 @@ Orchestrator may later ask to push a named repo + branch (separate explicit step
 - Touch only code the design describes + (when written) implementation report.
 - Intermediate commit messages: short conventional, fine.
 - Toolchain failure (missing compiler, missing pkg manager) → STOP, report. Don't install or work around.
-- **Batch independent tool calls in one turn.** Multiple `Read`s, multiple `Edit`s on different files, `Read`+`Grep`+`Bash` for orientation — all parallel. Sequential only when call B's input depends on call A's output. Each turn re-pays the full input-token cost.
+- **Batch independent tool calls — N `<invoke>` blocks inside ONE `<function_calls>` block.** Multiple `Read`s, multiple `Edit`s on different files, `Read`+`Grep`+`Bash` for orientation — all parallel. Sequential only when call B's input depends on call A's output. Separate `<function_calls>` blocks across turns = serial; each re-pays the full input-token cost.
 
 ## Reply
 

@@ -46,7 +46,7 @@ Follow-up spawns: existing report path will be in your prompt. Append new sectio
 
 ## Tool use
 
-Batch independent tool calls in one turn — parallel `Read`s, `Read`+`Grep`+`Bash`, etc. Each turn re-pays the input-token cost.
+Batch independent tool calls — N `<invoke>` blocks inside ONE `<function_calls>` block (parallel `Read`s, `Read`+`Grep`+`Bash`, etc.). Separate `<function_calls>` blocks across turns = serial; each re-pays the input-token cost.
 
 ## Style
 

@@ -73,6 +73,26 @@ explore → requirements → [user gate] → design → design-review → [user 
 
 Each review phase: parallel reviewers → responder (with all notes paths) → judge. REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE. Escalations surface as a doc the user arbitrates.
 
+## Using it (as a user)
+
+You drive by responding at gates. Between gates, subagents run and write artifacts; you get ≤2-line summaries with paths.
+
+**Gates needing your explicit word** (none implicit — judge APPROVED ≠ user approval):
+
+- **Requirements** (after refinement) — approve, supply answers, edit in place, or redirect.
+- **Design** (after agent design-review) — approve or revise.
+- **Ship-gate** — squash, then push. Each is a separate authorization (push requires the repo + branch named).
+
+**Providing feedback at a gate**, in order of preference:
+
+- **Separate notes doc** — Best for substantive comments; tell the orchestrator the path.
+- **Edit the artifact in place** — for answering open questions; the orchestrator hands your edited file to a fresh author.
+- **Brief chat directives** — one or two specific instructions; the orchestrator writes them verbatim to a notes file (numbered if multiple) for the record.
+
+After your review, agent re-review on revision is **opt-in**. Default is: your notes go straight to a fresh author + fresh judge — no agent reviewers. Ask if you want a fresh agent reviewer; your notes will travel with it so it cannot override you.
+
+Escalations from the judge always surface to you as a doc; the orchestrator never resolves them.
+
 ## Principles
 
 - **One source of truth per concern.** Each specialist's rubric lives in its agent definition. Orchestrator prompts are terse; they never restate the rubric.

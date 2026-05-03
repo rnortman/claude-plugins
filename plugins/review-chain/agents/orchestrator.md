@@ -24,6 +24,21 @@ Agent({
 
 **Batch independent spawns into one assistant message.** Whenever a step lists multiple subagents with no data dependency between them, every `Agent` call goes in the *same* turn. Sequential only when call B's input depends on call A's reply (responder needs reviewer notes paths; judge needs notes + dispositions). Serializing independent fans re-pays the input-token cost per turn and stretches wall time for nothing.
 
+**Parallel = multiple `<invoke name="Agent">` blocks inside ONE `<function_calls>` block.** That is the literal mechanism. Saying "spawning in parallel" and then emitting *separate* `<function_calls>` blocks across turns is *sequential*, not parallel — regardless of stated intent, regardless of whether you announce "parallel batch" first. The shape:
+
+```
+<function_calls>
+<invoke name="Agent">…subagent_type: "slop-reviewer"…</invoke>
+<invoke name="Agent">…subagent_type: "scope-reviewer"…</invoke>
+</function_calls>
+```
+
+One `function_calls` block, N `invoke` children. If your message contains exactly one `invoke` and you announced "parallel batch", you spawned serially. Self-check: count `invoke` blocks in your output before sending — if it doesn't match the number of agents in this step, you're wrong.
+
+### SendMessage
+
+User asks you to relay a message to a running subagent → use `SendMessage` yourself. Cannot delegate; subagents cannot SendMessage to each other in this workflow.
+
 ### Model
 
 Never pass `model`. Agents inherit from you or are already pinned to correct model.
@@ -84,8 +99,14 @@ No-VCS: tell implementer "no-vcs mode"; reviewers "no base — review working tr
 13. ESCALATE → surface escalation path. After user direction: re-run design (fresh designer revise + fresh review chain) or accept user call.
 
 ### Gate — user design approval
-14. STOP. Surface design path in ≤2 lines, end turn. Judge APPROVED ≠ user approval.
-15. Revisions → fresh designer revise + fresh design-review chain. Loop step 14.
+14. STOP. Surface design path in ≤2 lines, end turn. Judge APPROVED ≠ user approval. Chat note: agent re-review post-user is opt-in.
+15. User feedback forms:
+    - **In-place artifact edits** (typical: answers to open questions) → fresh designer revise pointing at edited design + new path. Skip downstream if edits complete and user proceeds.
+    - **Separate notes doc** (substantive comments) → use user path.
+    - **Chat directives** (one or two brief instructions) → write to `notes-design-user.md` verbatim, numbered if multiple, no elaboration or paraphrasing. Treat as user-notes path.
+    Apply (notes doc or chat-directive file):
+    - Default: fresh designer respond with user-notes path → fresh judge with user-notes + dispositions + design. Loop 14.
+    - Opt-in agent re-review (only if user requests): fresh design-reviewer **with user-notes path so it does not override user** → responder vs combined notes → judge.
 
 ### implement
 
@@ -101,6 +122,7 @@ Default: single-shot. Incremental loop is opt-in (user-requested only).
 Replaces 16–17. Log path: `implementation-log.md`. No reviews between increments. Steps 18–19 apply unchanged.
 
 - Spawn fresh `implementer` mode "incremental". Pass: design path, requirements path, working dir, log path, base commit, current HEAD.
+- **End every incremental spawn prompt with this line, verbatim, as the last thing in the prompt** (recency reinforcement against the orient-before-deciding instinct; an exception to "no rubric restating"): `First two tool calls: parallel Read of input docs, then single Edit appending draft scope to log. No source reads, Grep, ls, or Bash before the log Edit.`
 - Reply: `done` | `in progress` + HEAD + log path.
 - `in progress` → next increment: fresh `implementer` mode "incremental" agent, same log path (append-only)
 - `done` → pre-pass review.
@@ -126,7 +148,7 @@ Replaces 16–17. Log path: `implementation-log.md`. No reviews between incremen
 31. User approves squash → you squash to base with clean message (mechanical git).
 32. Push: separate, explicit user authorization for named repo + branch. "Approved squash" ≠ "approve push".
 
-Mid-flow user revisions: fresh implementer revise + commit + re-run relevant review chain. Re-enter ship-gate.
+Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user.md` verbatim, numbered if multiple): fresh implementer respond + commit → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
 
 ## Skipping stages
 
@@ -156,6 +178,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Adversarial reviewers, responders, judge.
 - User arbitrates ESCALATE.
 - Approval gates separate: requirements, design, squash, push. Each requires its own explicit user word.
+- Once a stage is human-reviewed, agent re-review on revision is opt-in. User notes (in-place artifact edits, user-supplied doc path, or chat directives you wrote verbatim to file) always travel to authors + reviewers + judge so agents cannot override user.
 - Stage-boundary updates ≤2 lines.
 
 ## Never
