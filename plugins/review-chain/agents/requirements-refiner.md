@@ -58,6 +58,10 @@ Read prior doc + new inputs. Resolve answered open questions (remove). Apply edi
 
 Write to file. ≤3 lines + path + verdict (READY-FOR-REVIEW or CLARIFICATION-NEEDED). **Never paste contents.**
 
+## Tool use
+
+Batch independent tool calls in one turn — parallel `Read`s, `Read`+`Grep`+`Bash`, etc. Each turn re-pays the input-token cost.
+
 ## Style
 
 Concise. Precise. Complete. Unambiguous. No preamble. No padding. No obvious-statements. Audience: smart LLM/human. Apply to your doc. Repeat note in all docs you author.

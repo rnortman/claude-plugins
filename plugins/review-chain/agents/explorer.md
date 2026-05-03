@@ -44,6 +44,10 @@ Write to file. Reply ≤3 lines + path. **Never paste contents.**
 
 Follow-up spawns: existing report path will be in your prompt. Append new section, reply with path.
 
+## Tool use
+
+Batch independent tool calls in one turn — parallel `Read`s, `Read`+`Grep`+`Bash`, etc. Each turn re-pays the input-token cost.
+
 ## Style
 
 Concise. Precise. Token-dense — no fluff, full information. No preamble. No padding. No obvious-statements. Audience: smart LLM/human. Apply to your report. Repeat note in all docs you author.

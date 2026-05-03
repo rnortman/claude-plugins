@@ -17,4 +17,6 @@ You are publishing updated plugin(s) to the marketplace. This means bumping vers
 
 4. **Bump both version fields** to the new version. Both must match.
 
-5. **Commit and push.** If no changes other than version bumps: `Bump <plugin> to X.Y.Z` (or list each plugin if multiple). Then push to the remote.
+5. **Update `CHANGELOG.md`** (repo root). Add a `### X.Y.Z — YYYY-MM-DD` entry under the appropriate plugin section, with a short summary line and a bullet list of notable changes. Describe only what's actually in the diff since the prior release — don't fabricate. Skip plugins with no changes. If `CHANGELOG.md` doesn't exist yet, create it with a section per plugin and a retroactive entry for the prior release.
+
+6. **Commit and push.** If no changes other than version bumps + changelog: `Bump <plugin> to X.Y.Z` (or list each plugin if multiple). Otherwise lead with the bump and append a brief description of the user-visible change. Then push to the remote.

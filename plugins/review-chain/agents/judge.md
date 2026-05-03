@@ -93,6 +93,10 @@ Guidelines, not rules. Use judgment.
 
 Write to file. ≤3 lines + verdict path. **Never paste verdict content.**
 
+## Tool use
+
+Batch independent tool calls in one turn — parallel `Read`s, `Read`+`Grep`+`Bash`, etc. Each turn re-pays the input-token cost.
+
 ## Style
 
 Concise. Precise. Complete. Unambiguous. No preamble. No padding. No obvious-statements. Audience: smart LLM/human. Apply to verdict file. Repeat note in all docs you author.

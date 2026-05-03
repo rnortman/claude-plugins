@@ -50,7 +50,7 @@ Trivially-matching implementation: no report. The design doc + diff speak for th
 Inputs: design path, requirements path, working dir, target implementation-report path, base commit.
 
 Steps:
-1. Read design — your spec.
+1. **First turn, batched:** `Read` design + requirements in parallel. Design is your spec.
 2. Implement. Touch only what design says. No bonus refactors. Real out-of-scope problems → note in report (which then exists); don't fix silently.
 3. Run build, typecheck, lint, tests. Fix breakage you cause.
 4. Deviations from design? Write/update implementation report. Otherwise no report.
@@ -68,13 +68,28 @@ Inputs: design path, requirements path, working dir, target log path, base commi
 Multiple as-small-as-reasonable implementation increments. One log across increments. Each invocation appends.
 
 Steps:
-1. Read design + log (if exists). Pick provisional scope from inputs only (no source reads yet) — small, ideally testable in isolation; one file or a few related files is a good start. If log not exist: this is the first increment.
-2. Explore source only as the chosen scope requires.
-3. Implement. Scope growing? Shrink mid-flight; don't push through.
-4. Build/test changed modules. Whole-repo green not required. Module tests pass if possible. Build errors blocking out-of-scope dependents OK.
-5. Append to log: what shipped this increment. Concise. Note deviations, TODOs, surprises. No "what remains" — design + log imply it.
-6. Commit with `--no-verify` unless final increment. Final increment must pass pre-commit checks.
-7. Reply: `done` or `in progress` + new HEAD + log path.
+1. **First turn, batched:** `Read` design + requirements + log (if it exists), in parallel. **No source reads, no `Grep`, no `ls` yet.**
+2. `Edit` log to append a **draft scope** for this increment: small, ideally testable in isolation; one file or a few related files is a good start. The draft decides what you explore next — not the other way around. Revise on the fly if needed; **replace** with the shipped scope at step 6. If log doesn't exist: this is the first increment.
+3. Explore source only as the chosen scope requires.
+4. Implement. Scope growing? Shrink mid-flight; don't push through.
+5. Build/test changed modules. Whole-repo green not required. Module tests pass if possible. Build errors blocking out-of-scope dependents OK.
+6. **Replace** the draft scope in the log with what actually shipped. Concise; file:line refs; flat bullet list. Note deviations, TODOs, surprises inline. **No "Remaining" / "Next" / "Future work" / "TODO for next increment" sections** — design + log imply what's left. See example below.
+7. Commit with `--no-verify` unless final increment. Final increment must pass pre-commit checks.
+8. Reply: `done` or `in progress` + new HEAD + log path.
+
+### Example log entry
+
+```
+## Increment 3 — spline reticulation (commit a1b2c3d)
+
+- widgets.rs:123-456: added `reticulate_spline`; `Widget::frob` now calls it.
+- splines.rs:78-92: wired reticulator into `SplinePipeline::run`.
+- widgets/tests.rs: 4 new tests; module tests pass.
+- Deviation: spec said one fn; shipped `reticulate_spline` + private `frob_handle` to keep the public fn under 30 lines.
+- TODO(spline-cache): caching deferred; comment at splines.rs:95.
+```
+
+**NOTE:** There is **no** "Remaining work" section; *only* what was done, and any deviations if applicable.
 
 Done = design fully implemented per log, `make check` passes. Scope is the implementer's call; only the log's accuracy matters. Log subsumes the implementation-report — no separate report.
 
@@ -133,6 +148,7 @@ Orchestrator may later ask to push a named repo + branch (separate explicit step
 - Touch only code the design describes + (when written) implementation report.
 - Intermediate commit messages: short conventional, fine.
 - Toolchain failure (missing compiler, missing pkg manager) → STOP, report. Don't install or work around.
+- **Batch independent tool calls in one turn.** Multiple `Read`s, multiple `Edit`s on different files, `Read`+`Grep`+`Bash` for orientation — all parallel. Sequential only when call B's input depends on call A's output. Each turn re-pays the full input-token cost.
 
 ## Reply
 
