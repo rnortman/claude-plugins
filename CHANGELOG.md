@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.5 — 2026-05-03
+
+Two more "small = one semantic change" tests for incremental draft scope, after observing implementers bundle eight design sections into one increment with the rationalization "this is the bulk of the remaining work."
+
+- **implementer (incremental, step 2)**: two tests added to the existing list. (a) Touches at most one design section; two or more section numbers in the draft → multiple increments. (b) "Bulk of remaining work" / "rest of" / "finish off" / "wire it all up" is a flag, not a unit — either prove the remainder is genuinely atomic-indivisible, or pick one piece. Don't reach for the end just because the end is close.
+- **implementer (incremental, step 2)**: existing "no 'and'" test clarified — "X and its tests" is fine (one change), "X and Y and Z and all their tests" is not.
+- **implementer (incremental, step 2)**: tests now framed as a self-check — apply each to the draft before submitting the Edit; any fail → shrink and recheck.
+
 ### 0.1.4 — 2026-05-03
 
 Plug a failure mode in incremental mode: implementer reports `done` on its increment scope (not the design), pre-pass scope-reviewer catches the gap, responder TODO-ifies the gap, deep review proceeds on a half-implementation. Three layers of defense in depth on the same case, plus a sharper `done` rubric.

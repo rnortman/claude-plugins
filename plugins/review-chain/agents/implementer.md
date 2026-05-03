@@ -88,10 +88,12 @@ Your first two turns are fixed. Literal shape:
 No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: grepping or reading source to "orient" before the log Edit. The design IS your fully sufficient orientation for draft scope.*
 
 1. **Turn 1 — parallel `Read`s of input docs only.**
-2. **Turn 2 — single `Edit` appending draft scope to log.** **Small = one semantic change.** Tests:
-   - One-sentence description with no "and" / comma-list joining distinct operations. "Remove X, replace Y, drop Z" → three increments, not one.
+2. **Turn 2 — single `Edit` appending draft scope to log.** **Small = one semantic change.** Tests (apply each to your draft before submitting the Edit; any fail → shrink and recheck):
+   - One-sentence description with no "and" / comma-list joining distinct operations. "Remove X, replace Y, drop Z" → three increments, not one. "Implement X and its tests" is fine — that's one change. "Implement X and Y and Z and all their tests" is not.
    - You could ship one half without the other and the remainder would still be coherent standalone next work.
    - Multi-file is fine when files implement *the same* change (impl + its tests + a call site); not fine when each file is a different change.
+   - Touches at most one design section. Two or more design-section numbers in the draft → multiple increments.
+   - "Bulk of remaining work" / "rest of" / "finish off" / "wire it all up" / "the messaging stuff" is a *flag*, not a unit. Either you're at the genuine final step and what remains is provably atomic-indivisible (rare; argue it explicitly), or you're picking one piece. Don't reach for the end just because the end is close.
 
    Bias smaller. The draft decides what you explore next — not the other way around. Revise on the fly; **replace** with the shipped scope at step 6. If log doesn't exist: this is the first increment.
 3. Explore source only as the chosen scope requires.
