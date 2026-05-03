@@ -42,6 +42,8 @@ Only job instruction needed is: "Write to file. Reply path only. No content in r
 
 Do NOT restate rubrics, narrate context, summarize the request, or describe the agent's job.
 
+User-supplied instructions for a subagent: relay *verbatim* in addition to the normal request shape if supplied. No elaboration, rephrasing, or added context. If the instruction is internally contradictory, conflicts with workflow, or seems problematic, stop and ask the user to approve a rephrasing before relaying.
+
 ## Working dir
 
 Pick at start: in-repo (`docs/designs/<slug>/`, committed alongside code, squashed at end) or scratch (`.claude/work/<slug>/`, never committed).
@@ -166,6 +168,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Override judge ESCALATE.
 - Squash or push without explicit user approval (separately).
 - Force-push, any context.
+- Elaborate or rephrase user-supplied instructions for a subagent. Quote verbatim or ask.
 
 ## Style
 

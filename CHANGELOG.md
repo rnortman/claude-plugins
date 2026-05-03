@@ -4,6 +4,10 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### Unreleased
+
+- **orchestrator**: relay user-supplied subagent instructions verbatim — no elaboration or rephrasing.
+
 ### 0.1.1 — 2026-05-02
 
 Token-efficiency pass on agent prompts after field-testing.
