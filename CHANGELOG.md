@@ -4,6 +4,16 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.4 — 2026-05-03
+
+Plug a failure mode in incremental mode: implementer reports `done` on its increment scope (not the design), pre-pass scope-reviewer catches the gap, responder TODO-ifies the gap, deep review proceeds on a half-implementation. Three layers of defense in depth on the same case, plus a sharper `done` rubric.
+
+- **implementer (incremental)**: rewrote the `done` rubric. Reply `done` iff the log accounts for **every design item** — implemented, or out-of-scope per design with TODO + rationale at the cited location. Trust the log without re-verifying against source. Anti-pattern called out: "I finished my increment, so I reply `done`." When in doubt, `in progress`. Was: implementers reading "done with `make check`" as "done with my slice".
+- **implementer (respond)**: new scope-aggregate ESCALATE path. If `scope-N` findings together name *significant net new implementation*, neither Fixed (does real work in respond mode) nor TODO (retroactively narrows the design) is appropriate — write `escalation-respond.md` and reply `ESCALATE`. Bar is aggregate work, not finding count; trivial scope nits handled normally.
+- **scope-reviewer**: direct ESCALATE authorization. If aggregate scope cuts are non-trivial, write `escalation-prepass-scope.md` alongside the findings file and reply `ESCALATE` — bypass the responder/judge chain entirely. Outermost layer of defense in depth.
+- **judge**: severity calibration row for scope. `scope-N` dispositioned TODO when the missing work is non-trivial in aggregate → ESCALATE on round 1 (not REWORK). Powering through to deep review with material design omissions wastes review budget; needs human arbitration.
+- **orchestrator**: pre-pass step 20 handles scope-reviewer `ESCALATE` reply (don't spawn responder, surface, stop). Pre-pass step 21 handles implementer respond `ESCALATE` reply (don't spawn judge, surface, stop). Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
+
 ### 0.1.3 — 2026-05-03
 
 Prompt tuning after more field testing — user-feedback flow at human review gates, plus stronger reinforcement of parallel tool-call mechanics.

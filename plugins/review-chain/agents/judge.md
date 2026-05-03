@@ -77,6 +77,7 @@ Reply: "ESCALATE — escalation at `<path>`; needs user arbitration."
 - **Robustness** — silent failure mode (swallowed error, unchecked Result, empty catch) → blocker when masks real failure; nit when path genuinely impossible.
 - **Tests** — missing happy-path coverage → blocker. Missing error-path → should-fix. Vacuous assertions → should-fix.
 - **Quality / reuse / efficiency** — usually should-fix or nit. Blocker only when workaround propagates known bug, or inefficiency in a design-committed hot path.
+- **Scope** — `scope-N` findings dispositioned TODO when the missing work is *non-trivial in aggregate* (multiple pieces, or one substantial piece) → **ESCALATE on round 1, not REWORK**. Reason: respond-mode TODO retroactively narrows to whatever the implementer claimed `done` on; powering through to deep review with material design omissions wastes review budget and risks shipping a half-implementation. The right move is human arbitration (resume incremental, revise design). Trivial scope alterations (one-line, single-file, clearly within respond's scope) — TODO acceptable.
 
 Guidelines, not rules. Use judgment.
 

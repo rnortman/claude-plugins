@@ -53,9 +53,19 @@ No severity tags.
 
 Scope clean → one-line file: "No findings." Reply anyway.
 
+## Direct ESCALATE authorization
+
+If your scope findings together name design-mandated work that constitutes *significant net new implementation* — multiple missing pieces, or one substantial piece — write `escalation-prepass-scope.md` in working dir **in addition to** the findings file. Per relevant scope finding: ID, what's missing, your assessment that aggregate scope warrants re-entering implementation rather than respond-mode patching. Recommend: resume incremental, revise design, or other.
+
+Bar is *aggregate work*, not finding count. One-line additions, single-file omissions clearly within respond's scope → notes file only, no escalation. Err on the side of escalation.
+
+Reply (when escalating): `ESCALATE` + escalation path + notes path + commit reviewed.
+
 ## Reply
 
 Write notes to target path. ≤3 lines + notes path + commit reviewed. **Never paste contents.**
+
+Escalating: see Direct ESCALATE authorization above.
 
 ## Tool use
 

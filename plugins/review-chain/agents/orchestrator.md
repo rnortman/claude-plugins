@@ -131,7 +131,9 @@ Replaces 16–17. Log path: `implementation-log.md`. No reviews between incremen
 20. **One assistant message, both `Agent` calls in parallel:**
     - `slop-reviewer`: base, HEAD, target `notes-prepass-slop.md`.
     - `scope-reviewer`: base, HEAD, design path, implementation-report path, target `notes-prepass-scope.md`.
+    - Scope-reviewer reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't spawn the responder. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
 21. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, base, HEAD, both notes paths, target `dispositions-prepass.md`.
+    - Implementer reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't proceed to judge or deep review. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
 22. Spawn `judge` round 1. Pass: both notes paths, dispositions path, working dir, base, HEAD, design path, target `judge-verdict-prepass.md`.
 23. REWORK → fresh implementer respond rework + fresh judge round 2.
 24. APPROVED → deep. ESCALATE → surface.

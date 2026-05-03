@@ -99,6 +99,7 @@ No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: 
 5. Build/test changed modules. Whole-repo green not required. Module tests pass if possible. Build errors blocking out-of-scope dependents OK.
 6. **Replace** the draft scope in the log with what actually shipped. Concise; file:line refs; flat bullet list. Note deviations, TODOs, surprises inline. **No "Remaining" / "Next" / "Future work" / "TODO for next increment" sections** — design + log imply what's left. See example below.
 7. Commit with `--no-verify` unless final increment. Final increment must pass pre-commit checks.
+8. Determine if `done` or `in progress`: See `done` rubric below — apply before replying.
 8. Reply: `done` or `in progress` + new HEAD + log path.
 
 ### Example log entry
@@ -115,7 +116,17 @@ No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: 
 
 **NOTE:** There is **no** "Remaining work" section; *only* what was done, and any deviations if applicable.
 
-Done = design fully implemented per log, `make check` passes. Scope is the implementer's call; only the log's accuracy matters. Log subsumes the implementation-report — no separate report.
+### `done` means the *design* is done, not your increment
+
+Reply `done` iff the implementation log (including this increment's entry) accounts for **every design item** — either implemented, or explicitly noted as out-of-scope per the design with a TODO + rationale at the cited location. Walk the design item-by-item against the log to confirm.
+
+**Trust the log.** Do not re-verify entries against source. Earlier increments wrote what they shipped; assessing whether all design items are accounted for is a log-reading task, not a code-reading task. The log is the contract.
+
+Anti-pattern: "I finished my increment, so I reply `done`." `done` is a claim about the *whole design*, not your slice. If even one design item lacks a log entry (and lacks a TODO + rationale at a cited location), reply `in progress` so the orchestrator spawns the next increment. When in doubt, `in progress`.
+
+Final-increment `make check` (or project equivalent) must pass; intermediate increments may commit with `--no-verify`.
+
+Log subsumes the implementation report — no separate report in incremental mode.
 
 Clarification-needed/toolchain-stop: same as initial.
 
@@ -135,12 +146,19 @@ Inputs: design path, working dir, base, current HEAD, **all notes file paths**, 
 
 1. Read all notes files. Findings prefixed (e.g. `slop-1`, `correctness-2`).
 2. Fact-check each against source — design, code, build/test output. Reviewers hallucinate; don't rubber-stamp.
-3. Per finding:
+3. **Scope-aggregate triage first.** Before per-finding work, look at all `scope-N` findings together. If they name design-mandated work that constitutes *significant net new implementation* — multiple missing pieces, or one substantial piece — neither Fixed nor TODO is appropriate:
+   - Fixed = doing real implementation work in respond mode, bypassing per-increment scoping. Wrong tool.
+   - TODO = retroactively narrowing the design after a `done` claim. Wrong outcome.
+
+   ESCALATE instead. Write `escalation-respond.md` in working dir. Per relevant scope finding: ID, what's missing, your rationale that aggregate scope warrants re-entering implementation rather than respond-mode patching. Recommend: resume incremental, revise design, or other. Do not commit fixes for these findings. Reply to parent: `ESCALATE` + escalation path. Skip the rest of the steps.
+
+   Trivial scope nits (one-line additions, single-file omissions clearly within respond's scope) — handle as Fixed in step 4. The bar is *aggregate work*, not finding count.
+4. Per finding:
    - **Fixed** — apply in code, run relevant tests/build. Note file:line.
    - **TODO(slug)** — defer when right. Add a TODO comment per project convention. Note where.
    - **Won't-Do** — only when doing it would actively harm. Required: rationale citing source arguing no one should ever do this.
-4. Re-run build/tests. Update implementation report iff fixes introduced (or removed) significant deviations from design. Commit revision.
-5. Write dispositions doc. Per finding:
+5. Re-run build/tests. Update implementation report iff fixes introduced (or removed) significant deviations from design. Commit revision.
+6. Write dispositions doc. Per finding:
    ```
    <id>:
    - Disposition: Fixed | TODO(slug) | Won't-Do
