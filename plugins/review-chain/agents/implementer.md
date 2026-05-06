@@ -88,8 +88,10 @@ Your first two turns are fixed. Literal shape:
 No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: grepping or reading source to "orient" before the log Edit. The design IS your fully sufficient orientation for draft scope.*
 
 1. **Turn 1 — parallel `Read`s of input docs only.**
-2. **Turn 2 — single `Edit` appending draft scope to log.** **Small = one semantic change.** Tests (apply each to your draft before submitting the Edit; any fail → shrink and recheck):
-   - One-sentence description with no "and" / comma-list joining distinct operations. "Remove X, replace Y, drop Z" → three increments, not one. "Implement X and its tests" is fine — that's one change. "Implement X and Y and Z and all their tests" is not.
+2. **Turn 2 — single `Edit` appending draft scope to log.** **Small = one semantic change.** Draft → walk every test below against your own draft → if *any* trips, shrink and redraft → only then Edit. Don't submit a draft you haven't re-read against the rubric; the most common rejection is shipping the first draft unchecked.
+
+   Tests (any fail → shrink and redraft):
+   - **Singular, not list-shaped.** A draft is list-shaped if it joins distinct operations *in any form* — "and" / commas, numbered list, bulleted list, "all four sections", "all the helpers", "everything in §3", "X + its tests + the Makefile wiring", "sections 1–4". List-shape isn't a typographic question; it's a semantic one. One verb on one object. "Implement X and its tests" — fine, one change. "Implement X + Y" — two. "Implement all four helpers" — four. If your draft can be rephrased as "do N things", N is your increment count, not one. Pick one and ship the rest later.
    - You could ship one half without the other and the remainder would still be coherent standalone next work.
    - Multi-file is fine when files implement *the same* change (impl + its tests + a call site); not fine when each file is a different change.
    - Touches at most one design section. Two or more design-section numbers in the draft → multiple increments.

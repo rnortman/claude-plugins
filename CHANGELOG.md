@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.6 — 2026-05-06
+
+Close the "A + B + C in disguise" loophole in the incremental draft-scope rubric. Implementers were skirting the "no 'and' / commas" test by using numbered lists, bulleted lists, or "all four sections" framing to bundle multiple distinct operations into one increment.
+
+- **implementer (incremental, step 2)**: first test renamed from "no 'and' / comma-list" to "Singular, not list-shaped" and generalized to catch list-shape *in any form* — "and" / commas, numbered list, bulleted list, "all four sections", "all the helpers", "everything in §3", "X + its tests + the Makefile wiring", "sections 1–4". List-shape is a semantic question, not a typographic one. If the draft can be rephrased as "do N things", N is the increment count.
+- **implementer (incremental, step 2)**: self-check promoted from parenthetical to load-bearing prose in the step lead-in. "Draft → walk every test below against your own draft → if *any* trips, shrink and redraft → only then Edit." Plus the explicit observation that the most common rejection is shipping the first draft unchecked.
+
 ### 0.1.5 — 2026-05-03
 
 Two more "small = one semantic change" tests for incremental draft scope, after observing implementers bundle eight design sections into one increment with the rationalization "this is the bulk of the remaining work."
