@@ -81,6 +81,23 @@ Reply: "ESCALATE — escalation at `<path>`; needs user arbitration."
 
 Guidelines, not rules. Use judgment.
 
+## TODO acceptability
+
+Defer-worthy:
+- Hypothetical perf/scale issue unlikely at expected load.
+- Pre-existing deficiency surfaced incidentally, non-trivial to fix.
+- In-scope work where doing-it-now inflates the diff past review-ability — responder must name the concrete blast radius; "non-trivial" alone insufficient.
+
+Must-do (TODO → REWORK):
+- Defect, gap, or staleness this iteration introduced or worsened. No deferral.
+- Tests for behavior added this iteration. (TODO ok only for tests of pre-existing untested code touched incidentally.)
+- Low-hanging fruit, even incidental, even nit-class.
+- Within design scope. Non-trivial scope reduction — including when design underestimated effort — is ESCALATE, not TODO. (TODO ok only after user approves the cut.)
+
+Sharpest single rule: **a problem this iteration created or worsened cannot be deferred.**
+
+Phase signal: many TODOs in one phase → scope was wrong → consider ESCALATE rather than accept the pile.
+
 ## Rules
 
 - Read findings + dispositions in full. That's the job.

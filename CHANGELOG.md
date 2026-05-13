@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.7 — 2026-05-13
+
+New `requirements-reviewer` agent + sharper judge guidance on what's TODO-eligible.
+
+- **requirements-reviewer** (new, Opus): adversarial pre-design review of the requirements doc against the original request and the exploration report. Checks spirit-of-request fit, whether the project is a good idea at all, requirements-vs-design slippage, over-specification that constrains the designer, scope leakage in both directions, and big-picture sanity. Doesn't read code — takes the exploration at face value. No responder, no judge — notes surface straight to the user at the requirements gate.
+- **orchestrator**: new `requirements-review` stage between `requirements` and the user gate. Runs after every refiner round that returns `READY-FOR-REVIEW`; skipped on `CLARIFICATION-NEEDED` (refiner's doc is questions). Findings prefix `requirements-N`. Workflow steps renumbered (6 → 33).
+- **judge**: new `TODO acceptability` section formalizing the rule judges had been applying inconsistently. Defer-worthy: hypothetical perf at scale, pre-existing deficiency surfaced incidentally, in-scope work that would balloon the diff (with named blast radius). Must-do: defects/gaps/staleness this iteration introduced or worsened, tests for behavior added this iteration, low-hanging fruit, in-scope work generally. Non-trivial scope reduction (incl. "design underestimated effort") → ESCALATE, not TODO; TODO only after user approves the cut. Sharpest rule: a problem this iteration created or worsened cannot be deferred. Phase signal: many TODOs in one phase → consider ESCALATE rather than accept the pile.
+
 ### 0.1.6 — 2026-05-06
 
 Close the "A + B + C in disguise" loophole in the incremental draft-scope rubric. Implementers were skirting the "no 'and' / commas" test by using numbered lists, bulleted lists, or "all four sections" framing to bundle multiple distinct operations into one increment.

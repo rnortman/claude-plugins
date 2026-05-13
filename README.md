@@ -14,18 +14,19 @@ There's some [anecdotal usage data](docs/usage-analysis/README.md) gathered usin
 
 ## Plugins
 
-- **[review-chain](plugins/review-chain/)** — Orchestrator-driven workflow with adversarial review chains. Specialist reviewers (slop, scope, security, correctness, error-handling, tests, reuse, quality, efficiency) run in parallel against each commit; a responder fact-checks every finding; a judge adjudicates. All agents are one-shot, file-based, and token-frugal — the orchestrator consumes only short summaries and paths.
+- **[review-chain](plugins/review-chain/)** — Orchestrator-driven workflow with adversarial review chains. Specialist reviewers (slop, scope, security, correctness, error-handling, tests, reuse, quality, efficiency) run in parallel against each commit; a responder fact-checks every finding; a judge adjudicates. A separate requirements-reviewer also runs after refinement, surfacing notes straight to the user (no judge). All agents are one-shot, file-based, and token-frugal — the orchestrator consumes only short summaries and paths.
 - **[setup-project](plugins/setup-project/)** — Optional bootstrap that wires the orchestrator as the default agent, adds a generic Working-With-Claude-Code section to `CLAUDE.md`, and installs a `TODO.md` + `TODO(slug)` tracking convention. Take it or leave it — `review-chain` works without it.
 
 ## How review-chain works
 
-The orchestrator drives explore → refine → design → implement → review → ship. Authoring is sequential with explicit user gates. Three review phases — design, pre-pass, deep — share the same review → respond → adjudicate pattern, with at most one rework round before APPROVED or ESCALATE. Squash and push are separate user gates at the end.
+The orchestrator drives explore → refine → design → implement → review → ship. Authoring is sequential with explicit user gates. Three review phases — design, pre-pass, deep — share the same review → respond → adjudicate pattern, with at most one rework round before APPROVED or ESCALATE. A fourth, requirements-review, is a single-shot adversarial check that surfaces straight to the user gate (no responder, no judge). Squash and push are separate user gates at the end.
 
 ```mermaid
 flowchart TD
     user([User request]) --> ex[explorer]
     ex --> rr[requirements-refiner]
-    rr -. user gate .-> d[designer drafts]
+    rr --> rrev[requirements-reviewer]
+    rrev -. user gate .-> d[designer drafts]
     d --> dr[[Design Review<br/>design-reviewer]]
     dr -. user gate .-> impl[implementer commits]
     impl --> pp[[Pre-pass Review<br/>slop + scope · parallel]]
@@ -59,7 +60,8 @@ For the morbidly curious — the whole thing fully expanded, every loop and ever
 flowchart LR
     user([User request]) --> ex[explorer]
     ex --> rr[requirements-refiner]
-    rr -. user gate .-> d[designer drafts]
+    rr --> rrev[requirements-reviewer]
+    rrev -. user gate .-> d[designer drafts]
 
     d --> dr[design-reviewer]
     dr --> dResp[designer responds]
