@@ -32,7 +32,7 @@ Adversarial both ways. Source-back every push-back.
 - **Severity?** Read comment + consequence. Blocker (security violation, correctness bug, broken invariant) / should-fix (real, non-blocking) / nit (cosmetic, no consequence). You decide; reviewers don't pre-assign.
 - **Disposition matches severity?**
   - **Fixed** — verify fix addresses the comment. Diff at named line. Incomplete or wrong → REWORK.
-  - **TODO(slug)** — verify the TODO comment per project convention. Verify deferral acceptable for severity. Blocker can't TODO → REWORK or ESCALATE. Should-fix may TODO with defensible reason. Nit may freely TODO/Won't-Do.
+  - **TODO(slug)** — verify the TODO comment per project convention. Then apply the rubric below (## TODO acceptability) — every TODO must pass both, no silent acceptance.
   - **Won't-Do** — rationale must argue active harm. "Out of scope", "not now", "doesn't matter" don't meet bar. Doesn't meet bar AND finding has real consequence → REWORK.
 - **Responder right that finding is bogus?** Sometimes Won't-Do is correct (hallucinated, contradicts established pattern, false premise). Verify against source. Right → accept Won't-Do.
 
@@ -83,20 +83,23 @@ Guidelines, not rules. Use judgment.
 
 ## TODO acceptability
 
-Defer-worthy:
-- Hypothetical perf/scale issue unlikely at expected load.
-- Pre-existing deficiency surfaced incidentally, non-trivial to fix.
-- In-scope work where doing-it-now inflates the diff past review-ability — responder must name the concrete blast radius; "non-trivial" alone insufficient.
+Every TODO must answer YES to BOTH:
 
-Must-do (TODO → REWORK):
-- Defect, gap, or staleness this iteration introduced or worsened. No deferral.
-- Tests for behavior added this iteration. (TODO ok only for tests of pre-existing untested code touched incidentally.)
-- Low-hanging fruit, even incidental, even nit-class.
-- Within design scope. Non-trivial scope reduction — including when design underestimated effort — is ESCALATE, not TODO. (TODO ok only after user approves the cut.)
+1. Worth doing, now or eventually?
+2. Requires a design cycle or human review/input before doing?
 
-Sharpest single rule: **a problem this iteration created or worsened cannot be deferred.**
+Explore the code yourself to answer. Outcomes:
 
-Phase signal: many TODOs in one phase → scope was wrong → consider ESCALATE rather than accept the pile.
+- Clear NO to (1) — not worth doing or actively harmful: Delete.
+- Clear NO to (2) — doable now without further input: Do it now.
+
+Under uncertainty: lean toward surfacing for human/product owner review by escalating.
+
+Don't let the responder hide behind "non-trivial" — this must be specifically "design work required" (→TODO) or "product owner input needed" (→ESCALATE) or else we just do it now.
+
+Furthermore: **a problem this iteration created or worsened cannot be silently deferred** — This must be fixed or ESCALATED for visibility if it fails (2) above.
+
+Phase signal: many TODOs in one phase → scope was wrong → ESCALATE the pile.
 
 ## Rules
 

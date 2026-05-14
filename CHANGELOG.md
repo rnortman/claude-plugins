@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.8 — 2026-05-13
+
+Tighter TODO acceptability: two-question rubric, no silent TODOs. Plus a new `check-todos` skill that applies the same rubric ad-hoc.
+
+- **judge**: TODO acceptability section rewritten around two questions every TODO must answer YES to — (1) worth doing, now or eventually? (2) requires a design cycle or human review/input before doing? Clear NO to (1) → delete. Clear NO to (2) → do it now. Under uncertainty → ESCALATE for human/product-owner review rather than silently accept. Don't let the responder hide behind "non-trivial" — they must name design-work-required (→ TODO) or product-owner-input-needed (→ ESCALATE). Replaces the prior "defer-worthy / must-do" lists, which judges had been applying selectively. Sharpest rule preserved: a problem this iteration created or worsened cannot be silently deferred.
+- **judge**: `TODO(slug)` bullet under "Disposition matches severity" now points at the two-question rubric instead of the old per-severity defer table.
+- **check-todos** (new skill): ad-hoc audit of TODOs in the current diff against the same rubric. Default scope is TODOs added/touched in uncommitted changes + commits ahead of upstream. Classifies each as delete / do-now / escalate, then acts. Orchestrator mode delegates judgement to a `review-chain:judge` subagent and execution to an implementation subagent. User-facing convenience outside the orchestrator workflow.
+
 ### 0.1.7 — 2026-05-13
 
 New `requirements-reviewer` agent + sharper judge guidance on what's TODO-eligible.

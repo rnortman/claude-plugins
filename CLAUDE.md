@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Claude Code plugin marketplace. Two plugins:
 
-- **`review-chain`** — orchestrator + specialist reviewer agents + judge + designer + implementer + explorer + requirements-refiner; plus the `simplify`, `cleanup-editor`, and `orchestrator` skills.
+- **`review-chain`** — orchestrator + specialist reviewer agents + judge + designer + implementer + explorer + requirements-refiner; plus the `simplify`, `cleanup-editor`, `check-todos`, and `orchestrator` skills.
 - **`setup-project`** — optional bootstrap that wires the orchestrator as the default agent, adds a generic Working-With-Claude-Code section to `CLAUDE.md`, and installs a TODO.md + `TODO(slug)` tracking convention.
 
 The repo has no build system, tests, or application code of its own — its contents get installed into other projects.
