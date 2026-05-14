@@ -156,6 +156,19 @@ Replaces 17–18. Log path: `implementation-log.md`. No reviews between incremen
 
 Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user.md` verbatim, numbered if multiple): fresh implementer respond + commit → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
 
+### todo burndown (alternate entry)
+
+Triggered by user request to burn down TODOs ("burndown", "let's pick off some TODOs", etc.). Replaces explore→requirements→design with explore→judge-verdicts; routes per-item batches into existing downstream workflows.
+
+1. Pick working dir + base commit (per setup steps 1–2).
+2. Spawn `explorer`. Pass: TODO.md path, N (default 10 unless user specifies), target exploration path. Prompt: select up to N TODOs that are related semantically or by source location; build context for each (file:line, surrounding code, related modules). Do not prescribe verdicts.
+3. Spawn `judge` mode "todo-burndown". Pass: exploration path, TODO.md path, target `judge-verdict-todoburndown.md`.
+
+#### Gate — user TODO burndown verdicts approval
+
+4. STOP. Surface verdicts path in ≤2 lines, end turn. Verdicts per TODO: do-now / delete / design / escalate. Judge verdict ≠ user approval.
+5. User directs from there; may flow into implementation directly or any other workflow stage.
+
 ## Skipping stages
 
 - Trivial fixes (typos): skip workflow.

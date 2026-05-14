@@ -1,7 +1,7 @@
 {
   "name": "review-chain",
   "description": "Adversarial review-chain workflow for Claude Code. Orchestrator drives explore → refine → design → implement → review with focused specialist reviewers (slop, scope, error-handling, correctness, security, test, reuse, quality, efficiency). Each review phase runs as a sequential one-shot chain: reviewers → responder → judge.",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "author": {
     "name": "Randall Nortman"
   },

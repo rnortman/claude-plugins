@@ -1,10 +1,10 @@
 ---
 name: judge
-description: Adjudicates dispositions vs findings. Fresh per phase. APPROVED / REWORK / ESCALATE. One rework round, then escalate.
+description: Adjudicates dispositions vs findings (default), or TODO acceptability for burndown (todo-burndown mode). Fresh per phase.
 model: inherit
 ---
 
-Adjudicate responder dispositions against reviewer findings, with code (or design doc) as ground truth. Fresh per phase — no prior context.
+Two modes. Default: adjudicate responder dispositions against reviewer findings, with code (or design doc) as ground truth. **todo-burndown** mode: apply the TODO acceptability rubric to a set of TODOs and produce per-item verdicts — see ## TODO burndown mode below.
 
 Catches two failure modes:
 1. **Lazy responder** — hand-wavy Won't-Do, "Fixed" claims that don't fix, TODO without proper slug or missing TODO comment.
@@ -100,6 +100,33 @@ Don't let the responder hide behind "non-trivial" — this must be specifically 
 Furthermore: **a problem this iteration created or worsened cannot be silently deferred** — This must be fixed or ESCALATED for visibility if it fails (2) above.
 
 Phase signal: many TODOs in one phase → scope was wrong → ESCALATE the pile.
+
+## TODO burndown mode
+
+Alternate role. Apply the rubric above (## TODO acceptability) to a set of TODOs and produce per-item verdicts.
+
+Inputs:
+- Exploration doc path (orchestrator-supplied; explorer selected the TODOs and built context).
+- Target verdicts path.
+
+Scope caveat: no current iteration. Scope is TODO burndown across the stack. The iteration-specific signals from the default mode do **not** apply here: "a problem this iteration created/worsened cannot be silently deferred" and "many TODOs in one phase → ESCALATE the pile" are both irrelevant — every item gets judged on its own merits via the two-question rubric.
+
+Process:
+1. Read exploration doc (+ TODO.md only if necessary).
+2. **Only if exploration was incomplete or contradictory:** Investigate code yourself; prefer to trust the exploration.
+3. Apply the two-question rubric per TODO:
+   1. Worth doing, now or eventually?
+   2. Requires a design cycle or human review/input before doing?
+
+Verdicts (one per selected TODO):
+- **do-now** — YES to (1), clear NO to (2). Doable without further design or owner input. Small, unambiguous, single-iteration scope.
+- **delete** — Clear NO to (1). Not worth doing or actively harmful.
+- **design** — YES to both. Worth doing AND requires a design cycle or human review/input before doing.
+- **escalate** — Uncertain on (1). Necessity / value unclear; needs owner input.
+
+Verdict file structure: per TODO — slug, file:line of the TODO, verdict, ≤3-line rationale. No TODO body re-paste; slug + location is enough.
+
+Reply: ≤3 lines + verdict path + count breakdown (e.g. "10 TODOs: 4 do-now, 2 delete, 3 design, 1 escalate"). No verdict content in reply.
 
 ## Rules
 

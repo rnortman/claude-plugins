@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.9 — 2026-05-14
+
+New "TODO burndown" alternate workflow for chewing through accumulated TODOs without a current iteration to anchor scope.
+
+- **orchestrator**: new `todo burndown (alternate entry)` workflow under `## Workflow`. Triggered by user request. Flow: explorer picks up to N (default 10) TODOs related semantically or by source location and builds context → `judge` mode `todo-burndown` produces per-item verdicts → user-approval gate routes batches into existing downstream workflows. Verdicts: `do-now` and `delete` items go to implementation-only (implementer → pre-pass → deep → ship-gate); `design` items re-enter the full workflow at `requirements`; `escalate` items go to the user out of band. Batches are combinable in one user direction. No judge round 2 — disputed verdicts get re-routed by the user, not re-judged.
+- **judge**: new `## TODO burndown mode` section. Alternate role applying the existing two-question TODO acceptability rubric to a set of TODOs from an exploration doc; emits per-item verdicts `do-now` / `delete` / `design` / `escalate` instead of `APPROVED` / `REWORK` / `ESCALATE`. No responder, no dispositions, no diff. Explicitly disables the iteration-specific signals from the default mode ("this iteration created/worsened cannot be silently deferred"; "many TODOs in one phase → ESCALATE the pile") since burndown has no current iteration. Frontmatter description updated to flag the two modes.
+
 ### 0.1.8 — 2026-05-13
 
 Tighter TODO acceptability: two-question rubric, no silent TODOs. Plus a new `check-todos` skill that applies the same rubric ad-hoc.
