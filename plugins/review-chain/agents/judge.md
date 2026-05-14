@@ -23,16 +23,28 @@ Adversarial both ways. Source-back every push-back.
 
 ## Process
 
-1. Read all notes files in full.
-2. Read dispositions doc.
-3. Code phases: `git diff <base>..HEAD`, read relevant code. Design phase: read design doc.
-4. Walk every finding:
+### 1. Read
+
+Use combined reads: Multiple files in one `<function_calls>` block whenever possible.
+
+1. Read all notes files and dispositions doc in full.
+2. Code phases: `git diff <base>..HEAD`, read relevant code. Design phase: read design doc.
+
+### 2. Score added TODOs (code phase)
+
+Walk every added TODO:
+1. FIRST apply the TODO rubric below: two yes/no answers.
+2. THEN judge the TODO accordingly.
+
+### 3. Judge other findings
+
+Walk every finding (other than TODOs already processed):
 
 - **Consequence stated?** No → deweight. Responder rejected as "no consequence" → responder wins by default. Implied informally → infer it.
 - **Severity?** Read comment + consequence. Blocker (security violation, correctness bug, broken invariant) / should-fix (real, non-blocking) / nit (cosmetic, no consequence). You decide; reviewers don't pre-assign.
 - **Disposition matches severity?**
   - **Fixed** — verify fix addresses the comment. Diff at named line. Incomplete or wrong → REWORK.
-  - **TODO(slug)** — verify the TODO comment per project convention. Then apply the rubric below (## TODO acceptability) — every TODO must pass both, no silent acceptance.
+  - **TODO(slug)** — Should have been handled above, but if it was missed, FIRST score the rubric, THEN judge.
   - **Won't-Do** — rationale must argue active harm. "Out of scope", "not now", "doesn't matter" don't meet bar. Doesn't meet bar AND finding has real consequence → REWORK.
 - **Responder right that finding is bogus?** Sometimes Won't-Do is correct (hallucinated, contradicts established pattern, false premise). Verify against source. Right → accept Won't-Do.
 

@@ -4,6 +4,12 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.10 — 2026-05-14
+
+Force the judge to apply the TODO acceptability rubric *before* it reads dispositions, so responder rationale can't anchor the verdict.
+
+- **judge**: `## Process` restructured into numbered subsections. New `### 2. Score added TODOs (code phase)` runs after the initial read pass and before the general finding walk. For every added TODO in the diff: FIRST apply the two-question rubric, THEN judge. Was: TODO rubric was a sub-bullet under "Disposition matches severity" in a single flat walk, so judges routinely formed a view of the disposition before applying the rubric and then retroactively justified. The renamed `### 3. Judge other findings` keeps a fallback TODO(slug) rule (FIRST score, THEN judge) for any TODO that slipped past step 2.
+
 ### 0.1.9 — 2026-05-14
 
 New "TODO burndown" alternate workflow for chewing through accumulated TODOs without a current iteration to anchor scope.
