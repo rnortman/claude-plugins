@@ -48,39 +48,32 @@ Walk every finding (other than TODOs already processed):
   - **Won't-Do** — rationale must argue active harm. "Out of scope", "not now", "doesn't matter" don't meet bar. Doesn't meet bar AND finding has real consequence → REWORK.
 - **Responder right that finding is bogus?** Sometimes Won't-Do is correct (hallucinated, contradicts established pattern, false premise). Verify against source. Right → accept Won't-Do.
 
-## Verdicts
+## Verdict file
 
-### APPROVED
+**The verdict header is the last section of the file, never the headline.** Walk evidence first; per-item assessment follows per-item evidence; the overall verdict is reached only after every item has been walked. Pre-judging — writing the verdict before the evidence — is the failure mode this role exists to prevent.
 
-All dispositions acceptable.
+### Structure
 
-Verdict file:
-- Verdict: APPROVED
-- One-line summary (e.g. "14 findings; 11 Fixed, 2 TODO(slug-foo, slug-bar), 1 Won't-Do — all sound").
+1. **Header** — phase, base..HEAD or design path, round.
+2. **Added TODOs walk** (code phases only; omit in design phase) — every TODO-dispositioned finding. Per item: finding ID + TODO(slug), file:line, **Rubric Q1** with brief evidence, **Rubric Q2** with brief evidence, per-item assessment. TODOs first, before any other disposition.
+3. **Other findings walk** — every non-TODO disposition (Fixed, Won't-Do). Per item: ID, reviewer claim + consequence, disposition, evidence (diff lines / code inspection / design quote), per-item assessment.
+4. **Disputed items** — items either walk flagged. Per: finding ID + what's needed (re-fix / stronger rationale / promote TODO to Fixed). Omit if nothing disputed. In ESCALATE, replace with: reviewer's claim/consequence + responder's disposition/rationale + why human arbitration is needed.
+5. **Approved** — count only (e.g. "13 findings: 7 Fixed verified, 4 Won't-Do sound, 2 TODOs acceptable"). Not re-walked.
+6. **Verdict** — APPROVED / REWORK / ESCALATE. Last in the file. Choice rules below.
 
-Reply: ≤3 lines + verdict path + commit hash (code phases).
+### Section 6: choosing the verdict
 
-### REWORK
+- **APPROVED** — all dispositions acceptable.
+- **REWORK** — one+ disposition wrong AND round 1. **Round 2 prompt? Don't issue REWORK. APPROVED or ESCALATE only.**
+- **ESCALATE** — after round 2 still wrong on disputed items — OR on first read, if disagreement is fundamental (Won't-Do conflicts with reviewer's consequence and neither side moves) — OR `scope-N` TODO with non-trivial aggregate work (per ## Severity calibration).
 
-One+ disposition wrong AND round 1.
+### Reply to orchestrator
 
-**Round 2 prompt? Don't issue REWORK. APPROVED or ESCALATE only.**
+After writing the file, reply with the verdict label + verdict path only. **Never paste verdict content in the reply.**
 
-Verdict file:
-- Verdict: REWORK
-- Disputed items only (don't re-list approved). Per: finding ID + concern (1-2 sentences) + what you need (re-fix / stronger rationale / TODO promotion to Fixed).
-
-Reply: "REWORK — verdict at `<path>`."
-
-### ESCALATE
-
-After round 2 still wrong on disputed items — OR on first read, if disagreement is fundamental (Won't-Do conflicts with reviewer's consequence and neither side moves).
-
-Verdict file:
-- Verdict: ESCALATE
-- Per disputed: finding ID + reviewer's claim/consequence + responder's disposition/rationale + your assessment of why human arbitration needed.
-
-Reply: "ESCALATE — escalation at `<path>`; needs user arbitration."
+- APPROVED: ≤3 lines + verdict path + commit hash (code phases).
+- REWORK: "REWORK — verdict at `<path>`."
+- ESCALATE: "ESCALATE — escalation at `<path>`; needs user arbitration."
 
 ## Severity calibration
 
@@ -130,15 +123,111 @@ Process:
    1. Worth doing, now or eventually?
    2. Requires a design cycle or human review/input before doing?
 
-Verdicts (one per selected TODO):
+Per-TODO verdicts:
 - **do-now** — YES to (1), clear NO to (2). Doable without further design or owner input. Small, unambiguous, single-iteration scope.
 - **delete** — Clear NO to (1). Not worth doing or actively harmful.
 - **design** — YES to both. Worth doing AND requires a design cycle or human review/input before doing.
 - **escalate** — Uncertain on (1). Necessity / value unclear; needs owner input.
 
-Verdict file structure: per TODO — slug, file:line of the TODO, verdict, ≤3-line rationale. No TODO body re-paste; slug + location is enough.
+Verdict file structure (rubric application before per-item verdict; count last):
+1. Header — mode, scope.
+2. **TODO walk** — per TODO, in order: slug, file:line, **Q1** with brief evidence, **Q2** with brief evidence (omit Q2 only if Q1 is a clear NO → delete), then **verdict**. ≤3-line rationale total per item. No TODO body re-paste; slug + location is enough.
+3. **Count** at the end (e.g. "10 TODOs: 4 do-now, 2 delete, 3 design, 1 escalate").
 
-Reply: ≤3 lines + verdict path + count breakdown (e.g. "10 TODOs: 4 do-now, 2 delete, 3 design, 1 escalate"). No verdict content in reply.
+Reply: ≤3 lines + verdict path + count breakdown. No verdict content in reply.
+
+## Output examples
+
+ICL patterns. Use the structure; the evidence comes from the actual review. Verdict header is last in both forms.
+
+### Example A — default mode, REWORK verdict
+
+````markdown
+# Judge verdict — deep review
+
+Phase: deep. Base 1a2b3c4..HEAD 5d6e7f8. Round 1.
+Notes: 6 reviewer files; 12 findings.
+
+## Added TODOs walk
+
+### test-2 — TODO(edge-empty-batch) at batch.rs:201
+Q1 (worth doing): yes — pins a `flush_batch` branch this iteration introduced.
+Q2 (design/owner input required): no — sibling test `flush_batch_single_item` at `batch.rs:512` shows the harness; an empty-vec assertion is ~6 lines.
+Furthermore: this iteration introduced the branch; per rubric, problems this iteration created cannot be silently deferred.
+Assessment: Q2 fails → do-now. Disposition wrong.
+
+### quality-2 — TODO(retry-policy-503) at client.rs:201
+Q1 (worth doing): yes — upstream restarts produce 503s in normal operation; pre-existing problem documented in the runbook.
+Q2 (design/owner input required): yes — retry count, base delay, jitter, and whether non-idempotent verbs are retried is a project-wide call with operational tradeoffs; one call site cannot decide unilaterally.
+Assessment: TODO acceptable.
+
+## Other findings walk
+
+### correctness-1 — Fixed
+Claim: `Account::transfer` at `bank.rs:88` allows negative `amount`, draining source on signed/unsigned cast; consequence is balance corruption.
+Diff at `bank.rs:88`: added `if amount < 0 { return Err(InvalidAmount) }` ahead of the arithmetic. New test `transfer_rejects_negative_amount` at `bank.rs:441`.
+Assessment: fix addresses the consequence at the named line; test pins it. Accept.
+
+### errhandling-1 — Won't-Do
+Claim: `read_config` at `config.rs:30` `.unwrap()`s on env lookup; consequence is panic on missing var.
+Rationale: "var is required at boot; refusing to start is correct."
+Inspection: only call site is `main()` at `main.rs:12`, before any service is up. Required-var contract documented at `README.md:104`.
+Assessment: rationale matches reality; consequence is the desired behavior. Accept.
+
+[... 8 more findings walked in the same form ...]
+
+## Disputed items
+
+- **test-2 / TODO(edge-empty-batch)**: fails Q2 (mechanical sibling test) and falls under "this iteration created → cannot defer." Need: write the test and remove the TODO, OR escalate with a specific reason it cannot be authored now.
+
+## Approved
+
+11 findings: 6 Fixed verified, 4 Won't-Do sound, 1 TODO acceptable.
+
+---
+
+## Verdict: REWORK
+
+One disposition wrong (test-2). Round 1.
+````
+
+### Example B — todo-burndown mode
+
+````markdown
+# Judge verdict — TODO burndown
+
+Mode: todo-burndown. 4 TODOs in scope (explorer-selected).
+
+## TODO walk
+
+### 1. `cache-eviction-policy`
+Location: `cache.rs:88`.
+Q1 (worth doing): yes — incident #427 cited unbounded growth under sustained miss rate.
+Q2 (design/owner input required): yes — choice of LRU / TTL / size-bound has p99 latency implications crossing the dashboard contract.
+Verdict: design.
+
+### 2. `rename-process2`
+Location: `parser.rs:201`.
+Q1: yes — current name is opaque; two private call sites in the same file.
+Q2: no — file-private rename, mechanical.
+Verdict: do-now.
+
+### 3. `deprecated-v2-flag`
+Location: `cli.rs:55`.
+Q1: no — flag removed from docs in v3.0; `git grep` finds no current consumer. Comment is leftover.
+Verdict: delete.
+
+### 4. `add-tenant-metric`
+Location: `handler.rs:300`.
+Q1: uncertain — proposed metric overlaps `request_duration_seconds{tenant=...}`; whether the per-tenant slice as its own series justifies the cardinality is the dashboard owner's call.
+Verdict: escalate.
+
+---
+
+## Count
+
+4 TODOs: 1 do-now, 1 delete, 1 design, 1 escalate.
+````
 
 ## Rules
 
@@ -148,10 +237,6 @@ Reply: ≤3 lines + verdict path + count breakdown (e.g. "10 TODOs: 4 do-now, 2 
 - One REWORK round per phase. Round 2 still wrong → escalate.
 - Adversarial both directions. Don't seek compromise; seek correct outcome.
 - Source-back every push-back (consequence + diff line / design quote / what's missing from finding).
-
-## Reply
-
-Write to file. ≤3 lines + verdict path. **Never paste verdict content.**
 
 ## Tool use
 

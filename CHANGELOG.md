@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.11 — 2026-05-15
+
+Force the judge to write evidence before the verdict, with two worked examples to anchor the form. Was: judges routinely opened the verdict file with "Verdict: REWORK" or "Verdict: APPROVED" as the headline and then back-filled justification — pre-judging defeats the role.
+
+- **judge**: `## Verdicts` replaced with `## Verdict file`. Opens with the rule "the verdict header is the last section of the file, never the headline." A 6-section file structure (Header → Added TODOs walk → Other findings walk → Disputed items → Approved → Verdict) replaces the prior "Verdict: X / one-line summary" template. Per-item assessment must follow per-item evidence; for any TODO, Q1 then Q2 each with brief evidence comes *before* the per-item assessment. The TODO walk is its own section and runs before the other-findings walk, matching the existing `## Process` step ordering. APPROVED / REWORK / ESCALATE definitions move under "Section 6: choosing the verdict" — they describe how to fill section 5/6 of the file, not peers of the structure. Reply-to-orchestrator formats consolidated into one subsection; the orphan `## Reply` section near the bottom removed.
+- **judge**: `## TODO burndown mode` verdict structure flipped to match — Q1 + Q2 evidence per TODO before per-item verdict; count moved to the end.
+- **judge**: new `## Output examples` section with two synthetic ICL examples (default-mode REWORK and todo-burndown). Both end with the verdict header, not start with it. Default-mode example contrasts a TODO that pins this-iteration code (must be do-now) against a TODO deferring a project-wide design call on pre-existing behavior (acceptable), so the rubric distinction is concrete.
+
 ### 0.1.10 — 2026-05-14
 
 Force the judge to apply the TODO acceptability rubric *before* it reads dispositions, so responder rationale can't anchor the verdict.
