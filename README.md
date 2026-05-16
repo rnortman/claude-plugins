@@ -14,18 +14,18 @@ There's some [anecdotal usage data](docs/usage-analysis/README.md) gathered usin
 
 ## Plugins
 
-- **[review-chain](plugins/review-chain/)** — Orchestrator-driven workflow with adversarial review chains. Specialist reviewers (slop, scope, security, correctness, error-handling, tests, reuse, quality, efficiency) run in parallel against each commit; a responder fact-checks every finding; a judge adjudicates. A separate requirements-reviewer also runs after refinement, surfacing notes straight to the user (no judge). All agents are one-shot, file-based, and token-frugal — the orchestrator consumes only short summaries and paths.
+- **[review-chain](plugins/review-chain/)** — Orchestrator-driven workflow with adversarial review chains. Specialist reviewers (slop, scope, security, correctness, error-handling, tests, reuse, quality, efficiency) run in parallel against each commit; a responder fact-checks every finding; a judge adjudicates. Requirements and design each get an adversarial review with the same review → respond → adjudicate pattern before the corresponding user gate. All agents are one-shot, file-based, and token-frugal — the orchestrator consumes only short summaries and paths.
 - **[setup-project](plugins/setup-project/)** — Optional bootstrap that wires the orchestrator as the default agent, adds a generic Working-With-Claude-Code section to `CLAUDE.md`, and installs a `TODO.md` + `TODO(slug)` tracking convention. Take it or leave it — `review-chain` works without it.
 
 ## How review-chain works
 
-The orchestrator drives explore → refine → design → implement → review → ship. Authoring is sequential with explicit user gates. Three review phases — design, pre-pass, deep — share the same review → respond → adjudicate pattern, with at most one rework round before APPROVED or ESCALATE. A fourth, requirements-review, is a single-shot adversarial check that surfaces straight to the user gate (no responder, no judge). Squash and push are separate user gates at the end.
+The orchestrator drives explore → refine → design → implement → review → ship. Authoring is sequential with explicit user gates. Four review phases — requirements, design, pre-pass, deep — share the same review → respond → adjudicate pattern, with at most one rework round before APPROVED or ESCALATE. Squash and push are separate user gates at the end.
 
 ```mermaid
 flowchart TD
     user([User request]) --> ex[explorer]
-    ex --> rr[requirements-refiner]
-    rr --> rrev[requirements-reviewer]
+    ex --> rr[requirements-refiner drafts]
+    rr --> rrev[[Requirements Review<br/>requirements-reviewer]]
     rrev -. user gate .-> d[designer drafts]
     d --> dr[[Design Review<br/>design-reviewer]]
     dr -. user gate .-> impl[implementer commits]
@@ -35,7 +35,7 @@ flowchart TD
     sq -. user gate .-> push([push])
 ```
 
-Each `[[boxed]]` review phase expands to the same review → respond → adjudicate loop. The responder is the designer (design phase) or the implementer (pre-pass and deep):
+Each `[[boxed]]` review phase expands to the same review → respond → adjudicate loop. The responder is the requirements-refiner (requirements phase), the designer (design phase), or the implementer (pre-pass and deep):
 
 ```mermaid
 flowchart LR
@@ -50,7 +50,7 @@ flowchart LR
     J2 -- ESCALATE --> esc([surface to user])
 ```
 
-Reviewers (one-shot, fresh each phase) write notes files in parallel; the responder reads all notes and marks each finding **Fixed**, **TODO(slug)**, or **Won't-Do**; the judge reads the notes, the dispositions, and the diff (or design doc) and decides APPROVED / REWORK / ESCALATE based on the consequence text in each finding. One rework round max per phase — round 2 returns either APPROVED or ESCALATE. Reviewers can also ESCALATE directly mid-phase (e.g., scope-reviewer flagging a bait-and-switch) without going through the judge.
+Reviewers (one-shot, fresh each phase) write notes files in parallel; the responder reads all notes and marks each finding **Fixed**, **TODO(slug)**, or **Won't-Do**; the judge reads the notes, the dispositions, and the diff (or the design / requirements doc) and decides APPROVED / REWORK / ESCALATE based on the consequence text in each finding. One rework round max per phase — round 2 returns either APPROVED or ESCALATE. Reviewers can also ESCALATE directly mid-phase (e.g., scope-reviewer flagging a bait-and-switch) without going through the judge.
 
 Implementer mode also has an opt-in **incremental** loop that emits multiple commits before pre-pass, useful for larger changes; reviews still run once at the end against the cumulative diff.
 
@@ -59,9 +59,18 @@ For the morbidly curious — the whole thing fully expanded, every loop and ever
 ```mermaid
 flowchart LR
     user([User request]) --> ex[explorer]
-    ex --> rr[requirements-refiner]
+    ex --> rr[requirements-refiner drafts]
     rr --> rrev[requirements-reviewer]
-    rrev -. user gate .-> d[designer drafts]
+    rrev --> rResp[requirements-refiner responds]
+    rResp --> rJ{judge}
+    rJ -. REWORK .-> rResp2[fresh refiner]
+    rResp2 --> rJ2{fresh judge}
+    rJ -- APPROVED --> rGate
+    rJ2 -- APPROVED --> rGate
+    rJ -- ESCALATE --> esc([surface to user])
+    rJ2 -- ESCALATE --> esc
+
+    rGate[/user gate/] --> d[designer drafts]
 
     d --> dr[design-reviewer]
     dr --> dResp[designer responds]

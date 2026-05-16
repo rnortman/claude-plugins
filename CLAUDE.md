@@ -69,12 +69,12 @@ The orchestrator is the default agent for consuming projects (when `setup-projec
 
 **Authoring subagents (one-shot per spawn — no resumes):**
 - **explorer** — surveys the codebase for context relevant to the request, covering all plausible interpretations. Pinned to Sonnet. Cites source code only, never design docs.
-- **requirements-refiner** — turns the user's request plus the exploration report into a refined spec. No implementation detail. Surfaces clarification questions when ambiguous.
+- **requirements-refiner** — turns the user's request plus the exploration report into a refined spec; also acts as the responder in requirements review. No implementation detail. Surfaces clarification questions when ambiguous.
 - **designer** — writes the initial design doc; also acts as the responder in design review. Self-cleans the draft via the `cleanup-editor` skill.
 - **implementer** — writes code per the approved design, runs build/tests, commits; also acts as the responder in review phases. Pinned to Sonnet via its agent file. The orchestrator does not pass `model` on implementer spawns; sole exception is when the user explicitly requests Opus, in which case the orchestrator passes `model: "opus"` on every implementer spawn for that task.
 
 **Review specialists** (one-shot per phase; each with a focused rubric baked in; reviewers do not assign severity — they state the consequence):
-- **requirements-reviewer** — pre-design adversarial review of the requirements doc against the original request and exploration. No judge; notes surface straight to the user. Pinned to Opus.
+- **requirements-reviewer** — pre-design adversarial review of the requirements doc against the original request and exploration. Pinned to Opus.
 - **design-reviewer** — pre-implementation adversarial review of the design doc against the requirements doc.
 - **slop-reviewer** — thin, diff-only: LLM writing tells, obvious unhandled cases, workarounds for existing bugs visible on the face of the diff.
 - **scope-reviewer** — thin, diff + design doc + implementation report: did the implementation finish the job, are punts explicit and justified.
@@ -88,11 +88,11 @@ The orchestrator is the default agent for consuming projects (when `setup-projec
 - **code-reviewer** — opt-in generalist, not part of the standard workflow.
 
 **Adjudicator:**
-- **judge** — fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or design doc), assesses severity from the consequence text, and decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
+- **judge** — fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or the design / requirements doc), assesses severity from the consequence text, and decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
 
 **Disposition vocabulary** (responder writes per finding ID): **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention), or **Won't-Do** (requires written rationale arguing the change would actively harm the codebase).
 
-**Flow:** orchestrator spawns explorer → requirements-refiner → requirements-reviewer → designer in sequence (one-shots; user gates after requirements and after design). Requirements-review is the one review phase with no responder or judge — notes surface straight to the user alongside the requirements doc. For each subsequent review phase (design-review, pre-pass, deep), the orchestrator spawns all relevant reviewers in parallel (one-shots), collects all notes paths, spawns the responder (designer or implementer) with all notes paths, then spawns the judge. If the judge returns REWORK, a fresh responder and fresh judge handle one rework round; then either APPROVED or ESCALATE. Pre-pass (slop + scope) runs first after the implementer's first commit; deep pass (seven specialists) runs after pre-pass approves. Escalations surface through the judge's escalation doc.
+**Flow:** orchestrator spawns explorer → requirements-refiner → requirements-reviewer → designer in sequence (one-shots; user gates after requirements and after design). For each review phase (requirements-review, design-review, pre-pass, deep), the orchestrator spawns all relevant reviewers in parallel (one-shots; requirements-review and design-review each have a single reviewer), collects all notes paths, spawns the responder (refiner, designer, or implementer) with all notes paths, then spawns the judge. If the judge returns REWORK, a fresh responder and fresh judge handle one rework round; then either APPROVED or ESCALATE. Pre-pass (slop + scope) runs first after the implementer's first commit; deep pass (seven specialists) runs after pre-pass approves. Escalations surface through the judge's escalation doc.
 
 The `/simplify` skill is a user-facing convenience for ad-hoc review outside the full workflow — it runs quality, reuse, and efficiency reviewers in parallel. The `/cleanup-editor` skill is invoked by the designer (and is available to any author) to self-clean a draft.
 

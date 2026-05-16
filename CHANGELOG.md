@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.12 — 2026-05-15
+
+Close the loop on requirements review: the refiner now responds to reviewer findings and the judge adjudicates, instead of dumping notes straight on the user. Same review → respond → adjudicate shape as every other phase.
+
+- **requirements-refiner**: restructured into explicit `draft` / `revise` / `respond` modes mirroring the designer. New `respond` mode reads reviewer notes, fact-checks each finding against request + exploration, dispositions per finding as Fixed / TODO(slug) / Won't-Do, writes a dispositions doc. TODO(slug) in requirements means "promote to an Open-Questions entry under the slug" — surfaces to the user at the gate.
+- **judge**: input list and process extended to recognize the requirements phase as a doc phase alongside design — reads the doc as ground truth, skips the code-phase TODOs walk. Header/verdict labels updated accordingly.
+- **orchestrator** (agent + skill): requirements-review section gains responder + judge; user-gate now follows the same shape as the design gate (in-place edits → fresh refiner revise; notes / chat directives → fresh refiner respond → fresh judge; agent re-review opt-in). REWORK loop and ESCALATE surfacing mirror design. Workflow steps renumbered (was 6 → 33; now 6 → 37).
+
 ### 0.1.11 — 2026-05-15
 
 Force the judge to write evidence before the verdict, with two worked examples to anchor the form. Was: judges routinely opened the verdict file with "Verdict: REWORK" or "Verdict: APPROVED" as the headline and then back-filled justification — pre-judging defeats the role.

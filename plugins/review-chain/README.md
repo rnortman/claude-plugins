@@ -22,7 +22,7 @@ The result is a workflow you can actually follow on a ten-finding review without
 ### Authoring subagents (one-shot per spawn)
 
 - **explorer** — Surveys the codebase for context relevant to the request. Cites source code only, never design docs.
-- **requirements-refiner** — Turns the user's request plus the exploration report into a refined spec.
+- **requirements-refiner** — Turns the user's request plus the exploration report into a refined spec; also acts as the responder in requirements review.
 - **designer** — Writes the initial design doc; also acts as the responder in design review. Self-cleans drafts via the `cleanup-editor` skill.
 - **implementer** — Writes code per the approved design, runs build/tests, commits; also acts as the responder in code review.
 
@@ -31,6 +31,9 @@ The result is a workflow you can actually follow on a ten-finding review without
 Each has a focused rubric baked into its agent definition. Orchestrator spawns the relevant specialists in parallel, collects findings paths, then spawns the responder and judge.
 
 Findings are numbered with a per-reviewer prefix (`security-1`, `correctness-3`, etc.). Each finding includes file:line, what's wrong, why, and a **consequence** statement. Reviewers do not assign severity tags — severity is judged downstream from the consequence.
+
+**Pre-design:**
+- **requirements-reviewer** — Adversarial fact-check of the requirements doc against the original request and exploration.
 
 **Pre-implementation:**
 - **design-reviewer** — Adversarial fact-check of the design doc against requirements.
@@ -53,9 +56,9 @@ Findings are numbered with a per-reviewer prefix (`security-1`, `correctness-3`,
 
 ### Adjudicator
 
-- **judge** — Spawned fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or design doc), assesses severity from the consequence text, decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
+- **judge** — Spawned fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or the design / requirements doc), assesses severity from the consequence text, decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
 
-The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention), or **Won't-Do** (requires written rationale arguing the change would actively harm the codebase).
+The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention, or Open-Questions entry in the requirements doc), or **Won't-Do** (requires written rationale arguing the change would actively harm the artifact).
 
 ### Skills
 
@@ -66,12 +69,13 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
 ## Workflow shape
 
 ```
-explore → requirements → [user gate] → design → design-review → [user gate]
+explore → requirements → requirements-review → [user gate]
+       → design → design-review → [user gate]
        → implement → pre-pass review (slop + scope) → deep review (7 specialists)
        → ship-gate (squash + push, separate user gates for each)
 ```
 
-Each review phase: parallel reviewers → responder (with all notes paths) → judge. REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE. Escalations surface as a doc the user arbitrates.
+Each review phase: parallel reviewers → responder (with all notes paths) → judge. REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE. Escalations surface as a doc the user arbitrates. Requirements-review and design-review each run with a single reviewer; the same chain shape applies.
 
 ## Using it (as a user)
 
@@ -79,7 +83,7 @@ You drive by responding at gates. Between gates, subagents run and write artifac
 
 **Gates needing your explicit word** (none implicit — judge APPROVED ≠ user approval):
 
-- **Requirements** (after refinement) — approve, supply answers, edit in place, or redirect.
+- **Requirements** (after refinement and agent review) — approve, supply answers, edit in place, or redirect.
 - **Design** (after agent design-review) — approve or revise.
 - **Ship-gate** — squash, then push. Each is a separate authorization (push requires the repo + branch named).
 

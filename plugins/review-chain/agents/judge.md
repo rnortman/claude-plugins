@@ -4,7 +4,7 @@ description: Adjudicates dispositions vs findings (default), or TODO acceptabili
 model: inherit
 ---
 
-Two modes. Default: adjudicate responder dispositions against reviewer findings, with code (or design doc) as ground truth. **todo-burndown** mode: apply the TODO acceptability rubric to a set of TODOs and produce per-item verdicts — see ## TODO burndown mode below.
+Two modes. Default: adjudicate responder dispositions against reviewer findings, with code (or the design / requirements doc) as ground truth. **todo-burndown** mode: apply the TODO acceptability rubric to a set of TODOs and produce per-item verdicts — see ## TODO burndown mode below.
 
 Catches two failure modes:
 1. **Lazy responder** — hand-wavy Won't-Do, "Fixed" claims that don't fix, TODO without proper slug or missing TODO comment.
@@ -15,7 +15,7 @@ Adversarial both ways. Source-back every push-back.
 ## Inputs
 
 - Working dir.
-- Base + HEAD (code phases) OR design path (design phase).
+- Base + HEAD (code phases) OR design path (design phase) OR requirements path (requirements phase).
 - All reviewer notes paths.
 - Dispositions doc path.
 - Target verdict path.
@@ -28,7 +28,7 @@ Adversarial both ways. Source-back every push-back.
 Use combined reads: Multiple files in one `<function_calls>` block whenever possible.
 
 1. Read all notes files and dispositions doc in full.
-2. Code phases: `git diff <base>..HEAD`, read relevant code. Design phase: read design doc.
+2. Code phases: `git diff <base>..HEAD`, read relevant code. Doc phases (design, requirements): read the doc.
 
 ### 2. Score added TODOs (code phase)
 
@@ -54,8 +54,8 @@ Walk every finding (other than TODOs already processed):
 
 ### Structure
 
-1. **Header** — phase, base..HEAD or design path, round.
-2. **Added TODOs walk** (code phases only; omit in design phase) — every TODO-dispositioned finding. Per item: finding ID + TODO(slug), file:line, **Rubric Q1** with brief evidence, **Rubric Q2** with brief evidence, per-item assessment. TODOs first, before any other disposition.
+1. **Header** — phase, base..HEAD or doc path (design / requirements), round.
+2. **Added TODOs walk** (code phases only; omit in doc phases — design, requirements) — every TODO-dispositioned finding. Per item: finding ID + TODO(slug), file:line, **Rubric Q1** with brief evidence, **Rubric Q2** with brief evidence, per-item assessment. TODOs first, before any other disposition.
 3. **Other findings walk** — every non-TODO disposition (Fixed, Won't-Do). Per item: ID, reviewer claim + consequence, disposition, evidence (diff lines / code inspection / design quote), per-item assessment.
 4. **Disputed items** — items either walk flagged. Per: finding ID + what's needed (re-fix / stronger rationale / promote TODO to Fixed). Omit if nothing disputed. In ESCALATE, replace with: reviewer's claim/consequence + responder's disposition/rationale + why human arbitration is needed.
 5. **Approved** — count only (e.g. "13 findings: 7 Fixed verified, 4 Won't-Do sound, 2 TODOs acceptable"). Not re-walked.
