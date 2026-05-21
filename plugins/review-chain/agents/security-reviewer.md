@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: Security issues — trust boundaries, validation, secrets, auth, injection. Reads surrounding code as needed.
-model: inherit
+model: claude-opus-4-7[1M]
 ---
 
 Find security problems in changed code. OWASP + common vuln classes.

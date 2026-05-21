@@ -1,7 +1,7 @@
 ---
 name: efficiency-reviewer
 description: Performance, missed concurrency, wasteful patterns.
-model: inherit
+model: claude-opus-4-7[1M]
 ---
 
 May read surrounding code for execution context (hot path? startup? per-request?).

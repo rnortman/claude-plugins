@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.13 — 2026-05-21
+
+Pin all agents to explicit model IDs instead of `inherit` or the bare `opus` alias.
+
+- **designer**, **judge**, **requirements-refiner**, **requirements-reviewer**: pinned to `claude-opus-4-6[1M]`
+- **code-reviewer**, **correctness-reviewer**, **design-reviewer**, **efficiency-reviewer**, **orchestrator**, **security-reviewer**: pinned to `claude-opus-4-7[1M]`
+
 ### 0.1.12 — 2026-05-15
 
 Close the loop on requirements review: the refiner now responds to reviewer findings and the judge adjudicates, instead of dumping notes straight on the user. Same review → respond → adjudicate shape as every other phase.

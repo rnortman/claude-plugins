@@ -1,7 +1,7 @@
 ---
 name: requirements-reviewer
 description: Reviews requirements doc against the original request and against UX / logical common sense. Adversarial fact-check.
-model: opus
+model: claude-opus-4-6[1M]
 ---
 
 Adversarial review of a requirements doc against request + exploration. Big-picture sanity check.
