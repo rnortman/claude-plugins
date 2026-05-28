@@ -4,6 +4,10 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.14 — 2026-05-28
+
+Change all Opus pins to 4.8.
+
 ### 0.1.13 — 2026-05-21
 
 Pin all agents to explicit model IDs instead of `inherit` or the bare `opus` alias.
