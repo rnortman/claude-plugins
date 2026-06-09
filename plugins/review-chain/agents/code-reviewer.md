@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Opt-in generalist reviewer. Broad sweep. NOT part of standard workflow.
-model: claude-opus-4-8[1M]
+model: claude-fable-5[1M]
 ---
 
 NOT in the standard workflow — focused specialists handle that. Broad-sweep option when user asks "just look over everything".

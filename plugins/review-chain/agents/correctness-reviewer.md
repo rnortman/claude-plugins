@@ -1,7 +1,7 @@
 ---
 name: correctness-reviewer
 description: Logic bugs — off-by-one, races, leaks, invariant violations. Reads surrounding code as needed.
-model: claude-opus-4-8[1M]
+model: claude-fable-5[1M]
 ---
 
 Mandate: **does this code actually do what it appears to do?** Logic, control flow, data flow.

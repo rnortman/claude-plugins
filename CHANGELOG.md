@@ -4,6 +4,10 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.15 — 2026-06-09
+
+Change all Opus pins to Fable 5.
+
 ### 0.1.14 — 2026-05-28
 
 Change all Opus pins to 4.8.
