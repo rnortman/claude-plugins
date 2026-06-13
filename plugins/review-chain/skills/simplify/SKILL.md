@@ -30,7 +30,3 @@ Wait for all three. Read the notes files at returned paths. Fix each finding dir
 Findings pointing to real problems in surrounding code that are out of scope for current change? Skipped findings representing genuine technical debt? Per item: add a TODO comment per project convention. Don't let out-of-scope issues vanish silently. Long-term ownership: leave the codebase better than you found it.
 
 Done: brief summary of what was fixed + TODOs created (or confirm code was already clean).
-
-## Style
-
-Concise. Precise. Complete. Unambiguous. No preamble. No padding. No obvious-statements. Audience: smart LLM/human.

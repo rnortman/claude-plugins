@@ -57,7 +57,3 @@ Throat-clearing intros, restated context the reader already has, "as mentioned a
 5. Done: no thought-process prose, no contradictions, no answerable open questions, no promised-but-missing sections.
 
 You're not creating a separate cleanup report. Improve your own draft directly.
-
-## Style
-
-Concise. Precise. Complete. Unambiguous. No preamble. No padding. No obvious-statements. Audience: smart LLM/human.

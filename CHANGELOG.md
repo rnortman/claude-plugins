@@ -4,7 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
-### 0.1.16 — 2026-06-12
+### 0.1.17 — 2026-06-13
+
+Stop instructing the models how to write, and add an ELI5 rendering of the design for the user gate.
+
+- **All agents + skills**: removed the trailing `## Style` directive block (`Concise. Precise… No padding… Audience: smart LLM/human… Repeat note in all docs you author.`) and the stray inline style notes (explorer's "Concise ≠ sparse / token-dense", implementer's "Concise;" log instruction). The models write as they write; substantive guidance (e.g. explorer's "quote the signature over prose", test-reviewer's "LLM tests are often verbose + vacuous") is kept.
+- **eli5-explainer** (new agent, pinned to `claude-opus-4-6[1M]`): after design review approves, renders the design as a no-context-assumed ELI5 narrative at `design-eli5.md` — builds all context step by step, explains every decision's reasoning, elides low-level detail, treats open questions thoroughly. Iron rule: explains the design, never deviates from it; surfaces gaps rather than fixing them. One-shot, not part of any review chain.
+- **orchestrator** (agent + skill): new `eli5` stage between design-review and the design user gate; the gate now surfaces `design.md` and `design-eli5.md` together; the ELI5 is regenerated on any later design revision so the two stay in sync.
 
 Revert 0.1.15: change all Fable 5 pins back to Opus 4.8.
 

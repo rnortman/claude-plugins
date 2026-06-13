@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Claude Code plugin marketplace. Two plugins:
 
-- **`review-chain`** — orchestrator + specialist reviewer agents + judge + designer + implementer + explorer + requirements-refiner; plus the `simplify`, `cleanup-editor`, `check-todos`, and `orchestrator` skills.
+- **`review-chain`** — orchestrator + specialist reviewer agents + judge + designer + eli5-explainer + implementer + explorer + requirements-refiner; plus the `simplify`, `cleanup-editor`, `check-todos`, and `orchestrator` skills.
 - **`setup-project`** — optional bootstrap that wires the orchestrator as the default agent, adds a generic Working-With-Claude-Code section to `CLAUDE.md`, and installs a TODO.md + `TODO(slug)` tracking convention.
 
 The repo has no build system, tests, or application code of its own — its contents get installed into other projects.
@@ -71,6 +71,7 @@ The orchestrator is the default agent for consuming projects (when `setup-projec
 - **explorer** — surveys the codebase for context relevant to the request, covering all plausible interpretations. Pinned to Sonnet. Cites source code only, never design docs.
 - **requirements-refiner** — turns the user's request plus the exploration report into a refined spec; also acts as the responder in requirements review. No implementation detail. Surfaces clarification questions when ambiguous.
 - **designer** — writes the initial design doc; also acts as the responder in design review. Self-cleans the draft via the `cleanup-editor` skill.
+- **eli5-explainer** — after design review approves, renders the design as a no-context-assumed ELI5 narrative (`design-eli5.md`) presented alongside the design at the user gate. Pinned to Opus 4.6. Explains, never deviates from, the design. Not part of any review chain; regenerated whenever the design changes.
 - **implementer** — writes code per the approved design, runs build/tests, commits; also acts as the responder in review phases. Pinned to Sonnet via its agent file. The orchestrator does not pass `model` on implementer spawns; sole exception is when the user explicitly requests Opus, in which case the orchestrator passes `model: "opus"` on every implementer spawn for that task.
 
 **Review specialists** (one-shot per phase; each with a focused rubric baked in; reviewers do not assign severity — they state the consequence):
@@ -92,7 +93,7 @@ The orchestrator is the default agent for consuming projects (when `setup-projec
 
 **Disposition vocabulary** (responder writes per finding ID): **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention), or **Won't-Do** (requires written rationale arguing the change would actively harm the codebase).
 
-**Flow:** orchestrator spawns explorer → requirements-refiner → requirements-reviewer → designer in sequence (one-shots; user gates after requirements and after design). For each review phase (requirements-review, design-review, pre-pass, deep), the orchestrator spawns all relevant reviewers in parallel (one-shots; requirements-review and design-review each have a single reviewer), collects all notes paths, spawns the responder (refiner, designer, or implementer) with all notes paths, then spawns the judge. If the judge returns REWORK, a fresh responder and fresh judge handle one rework round; then either APPROVED or ESCALATE. Pre-pass (slop + scope) runs first after the implementer's first commit; deep pass (seven specialists) runs after pre-pass approves. Escalations surface through the judge's escalation doc.
+**Flow:** orchestrator spawns explorer → requirements-refiner → requirements-reviewer → designer in sequence (one-shots; user gates after requirements and after design). For each review phase (requirements-review, design-review, pre-pass, deep), the orchestrator spawns all relevant reviewers in parallel (one-shots; requirements-review and design-review each have a single reviewer), collects all notes paths, spawns the responder (refiner, designer, or implementer) with all notes paths, then spawns the judge. If the judge returns REWORK, a fresh responder and fresh judge handle one rework round; then either APPROVED or ESCALATE. After design review approves, a fresh `eli5-explainer` renders the design as an ELI5 doc, presented alongside the design at the user gate (and regenerated on any later design revision). Pre-pass (slop + scope) runs first after the implementer's first commit; deep pass (seven specialists) runs after pre-pass approves. Escalations surface through the judge's escalation doc.
 
 The `/simplify` skill is a user-facing convenience for ad-hoc review outside the full workflow — it runs quality, reuse, and efficiency reviewers in parallel. The `/cleanup-editor` skill is invoked by the designer (and is available to any author) to self-clean a draft.
 

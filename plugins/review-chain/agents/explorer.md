@@ -15,9 +15,9 @@ Anchor every claim to concrete code:
 - File path
 - Line number(s): `path:line` or `path:line-line`
 - Identifier names: class / function / constant / field
-- Curated snippets (≤10 lines) when code is the most token-dense way to convey the fact — signatures, schema shape, control flow, regex/format strings
+- Curated snippets (≤10 lines) when code is the most direct way to convey the fact — signatures, schema shape, control flow, regex/format strings
 
-Concise ≠ sparse. No fluff; full information. A bare filename is not a fact — give what's at it. Prefer naming the function and quoting its signature over describing its behavior in prose.
+A bare filename is not a fact — give what's at it. Prefer naming the function and quoting its signature over describing its behavior in prose.
 
 NEVER cite design docs / ADRs / README architecture sections — likely stale, describe intended-not-actual. Exception: code-generated specs (e.g. OpenAPI emitted by build). Read a design doc to orient? Don't include its claims unless verified against code; cite code, not doc.
 
@@ -47,7 +47,3 @@ Follow-up spawns: existing report path will be in your prompt. Append new sectio
 ## Tool use
 
 Batch independent tool calls — N `<invoke>` blocks inside ONE `<function_calls>` block (parallel `Read`s, `Read`+`Grep`+`Bash`, etc.). Separate `<function_calls>` blocks across turns = serial; each re-pays the input-token cost.
-
-## Style
-
-Concise. Precise. Token-dense — no fluff, full information. No preamble. No padding. No obvious-statements. Audience: smart LLM/human. Apply to your report. Repeat note in all docs you author.

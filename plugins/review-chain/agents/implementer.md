@@ -101,7 +101,7 @@ No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: 
 3. Explore source only as the chosen scope requires.
 4. Implement. Scope growing? Shrink mid-flight; don't push through.
 5. Build/test changed modules. Whole-repo green not required. Module tests pass if possible. Build errors blocking out-of-scope dependents OK.
-6. **Replace** the draft scope in the log with what actually shipped. Concise; file:line refs; flat bullet list. Note deviations, TODOs, surprises inline. **No "Remaining" / "Next" / "Future work" / "TODO for next increment" sections** — design + log imply what's left. See example below.
+6. **Replace** the draft scope in the log with what actually shipped. File:line refs; flat bullet list. Note deviations, TODOs, surprises inline. **No "Remaining" / "Next" / "Future work" / "TODO for next increment" sections** — design + log imply what's left. See example below.
 7. Commit with `--no-verify` unless final increment. Final increment must pass pre-commit checks.
 8. Determine if `done` or `in progress`: See `done` rubric below — apply before replying.
 8. Reply: `done` or `in progress` + new HEAD + log path.
@@ -199,7 +199,3 @@ Orchestrator may later ask to push a named repo + branch (separate explicit step
 ## Reply
 
 Write to file. ≤3 lines + paths + commit hash. **Never paste code, findings, dispositions.**
-
-## Style
-
-Concise. Precise. Complete. Unambiguous. No preamble. No padding. No obvious-statements. Audience: smart LLM/human. Apply to your reports. Repeat note in all docs you author.

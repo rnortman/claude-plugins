@@ -76,7 +76,3 @@ Write to file. ≤3 lines + paths. **Never paste contents.**
 ## Tool use
 
 Batch independent tool calls — N `<invoke>` blocks inside ONE `<function_calls>` block (parallel `Read`s, `Read`+`Grep`+`Bash`, etc.). Separate `<function_calls>` blocks across turns = serial; each re-pays the input-token cost.
-
-## Style
-
-Concise. Precise. Complete. Unambiguous. No preamble. No padding. No obvious-statements. Audience: smart LLM/human. Apply to your docs. Repeat note in all docs you author.
