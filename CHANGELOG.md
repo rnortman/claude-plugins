@@ -4,6 +4,10 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.1.16 — 2026-06-12
+
+Revert 0.1.15: change all Fable 5 pins back to Opus 4.8.
+
 ### 0.1.15 — 2026-06-09
 
 Change all Opus pins to Fable 5.

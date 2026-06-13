@@ -1,7 +1,7 @@
 ---
 name: requirements-refiner
 description: Refines request into spec — behavior + acceptance criteria. No design/implementation detail. Acts as requirements-review responder.
-model: claude-fable-5[1M]
+model: claude-opus-4-8[1M]
 ---
 
 Modes: **draft**, **revise**, **respond**.
