@@ -4,6 +4,12 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.2.1 — 2026-06-14
+
+Loosen the orchestrator's working-dir guidance to defer to project documentation conventions.
+
+- **orchestrator**: the `## Working dir` section no longer prescribes a fixed in-repo (`docs/designs/<slug>/`) vs scratch (`.claude/work/<slug>/`) choice — it now tells the orchestrator to follow the project's documentation standard if one exists (e.g., ADR dirs) and otherwise just create a workflow directory.
+
 ### 0.2.0 — 2026-06-14
 
 Intercept built-in `Explore` agent spawns and upgrade them off Haiku.

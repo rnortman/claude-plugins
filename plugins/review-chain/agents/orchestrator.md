@@ -61,7 +61,7 @@ User-supplied instructions for a subagent: relay *verbatim* in addition to the n
 
 ## Working dir
 
-Pick at start: in-repo (`docs/designs/<slug>/`, committed alongside code, squashed at end) or scratch (`.claude/work/<slug>/`, never committed).
+If the project has a documentation standard (e.g., ADR dirs), follow that standard. Create a workflow directory.
 
 Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md`, `implementation-report.md` (only when deviations exist), `implementation-log.md` (incremental mode only), `notes-<phase>-<reviewer>.md`, `dispositions-<phase>.md`, `judge-verdict-<phase>.md`, `escalation-<phase>.md`.
 
