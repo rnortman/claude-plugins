@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.2.0 — 2026-06-14
+
+Intercept built-in `Explore` agent spawns and upgrade them off Haiku.
+
+- **intercept-explore** (new `PreToolUse` hook, `hooks/hooks.json` + `hooks/intercept-explore.sh`): the built-in `Explore` agent runs on Haiku, too weak for this workflow; the orchestrator should use `review-chain:explorer` (Sonnet) but reflexively reaches for `Explore`. The hook fires on every `Agent`/`Task` spawn but only acts when `subagent_type == "Explore"`, rewriting the tool input via `updatedInput`. Default behavior: silently override the model to `sonnet`. Configurable via the `REVIEW_CHAIN_EXPLORE_HOOK` env var — `off` (pass through to Haiku), `deny` (block and redirect to `review-chain:explorer`), or any model name. Fails open if `jq` is missing or input is unparseable.
+- **README** + **CLAUDE.md**: document the hook, its env-var control surface, and the global-scope / no-native-toggle caveat.
+
 ### 0.1.17 — 2026-06-13
 
 Stop instructing the models how to write, and add an ELI5 rendering of the design for the user gate.

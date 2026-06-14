@@ -66,6 +66,21 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
 - **/cleanup-editor** — Invoked by the designer (and available to any author) to self-clean a draft for clarity, contradictions, and answerable open questions.
 - **/orchestrator** (skill version of the orchestrator agent) — Lets you trigger the orchestrator's workflow as a skill from any agent.
 
+### Hooks
+
+- **intercept-explore** (`PreToolUse`) — The built-in `Explore` agent runs on Haiku, which is too weak for this workflow's exploration; the orchestrator is meant to use the `review-chain:explorer` agent (Sonnet) but reflexively reaches for `Explore` anyway. This hook intercepts every `Explore` spawn and, by default, **silently upgrades it to Sonnet**. Every other tool call and every other agent passes through untouched.
+
+  The hook is active in any project while `review-chain` is enabled. Claude Code has no native per-plugin hook toggle, so behavior is controlled by a single environment variable, `REVIEW_CHAIN_EXPLORE_HOOK`:
+
+  | Value | Effect |
+  | :--- | :--- |
+  | *(unset)* | **Default.** Silently override `Explore`'s model to `sonnet`. |
+  | `off` (also `0`, `false`, `disable`, `none`) | Do nothing — the built-in `Explore` runs as-is (Haiku). |
+  | `deny` | Block the spawn and tell Claude to use `review-chain:explorer` instead. |
+  | *a model* (e.g. `opus`, `haiku`, `claude-opus-4-8`) | Override `Explore`'s model to that model. |
+
+  Set it in any shell or project where you want different behavior, e.g. `export REVIEW_CHAIN_EXPLORE_HOOK=off`. The hook fails open: if `jq` is missing or the input can't be parsed, it does nothing and the spawn proceeds unmodified.
+
 ## Workflow shape
 
 ```
