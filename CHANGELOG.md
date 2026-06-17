@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.3.0 — 2026-06-17
+
+Rework requirements-refiner: enriched prompt instead of formal spec.
+
+- **requirements-refiner**: rewritten to produce "a better prompt" — narrative prose that enriches the user's brief request with codebase context, resolves ambiguities, and flags tensions between the request and the codebase. No longer writes a formal specification with acceptance criteria and in-scope/out-of-scope sections. Output style mirrors the eli5-explainer: assumes no codebase knowledge, introduces concepts before using them, explains reasoning. Pinned to `claude-opus-4-6[1M]` (was `claude-opus-4-8[1M]`).
+- **requirements-reviewer**: rubric updated to match — "requirements not design" → "enrichment not design", "over-specification" → "over-constraint", added "tensions missed or misrepresented" dimension.
+- **design-reviewer**, **judge**: terminology updated ("requirements doc" → "refined request") where these agents reference the refiner's output.
+
 ### 0.2.1 — 2026-06-14
 
 Loosen the orchestrator's working-dir guidance to defer to project documentation conventions.

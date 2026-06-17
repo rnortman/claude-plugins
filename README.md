@@ -50,7 +50,7 @@ flowchart LR
     J2 -- ESCALATE --> esc([surface to user])
 ```
 
-Reviewers (one-shot, fresh each phase) write notes files in parallel; the responder reads all notes and marks each finding **Fixed**, **TODO(slug)**, or **Won't-Do**; the judge reads the notes, the dispositions, and the diff (or the design / requirements doc) and decides APPROVED / REWORK / ESCALATE based on the consequence text in each finding. One rework round max per phase — round 2 returns either APPROVED or ESCALATE. Reviewers can also ESCALATE directly mid-phase (e.g., scope-reviewer flagging a bait-and-switch) without going through the judge.
+Reviewers (one-shot, fresh each phase) write notes files in parallel; the responder reads all notes and marks each finding **Fixed**, **TODO(slug)**, or **Won't-Do**; the judge reads the notes, the dispositions, and the diff (or the design / refined request) and decides APPROVED / REWORK / ESCALATE based on the consequence text in each finding. One rework round max per phase — round 2 returns either APPROVED or ESCALATE. Reviewers can also ESCALATE directly mid-phase (e.g., scope-reviewer flagging a bait-and-switch) without going through the judge.
 
 Implementer mode also has an opt-in **incremental** loop that emits multiple commits before pre-pass, useful for larger changes; reviews still run once at the end against the cumulative diff.
 

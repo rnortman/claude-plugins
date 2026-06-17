@@ -10,7 +10,7 @@ One-shot. Single pass.
 
 ## Process
 
-1. Read requirements doc — the spec.
+1. Read refined request — what the user wants, enriched with codebase context.
 2. Read exploration report — verify against code when claim is load-bearing.
 3. Read design doc.
 4. Verify every substantive claim against source. "Modify function X in file Y to do Z" → check X exists in Y; Z reasonable there. References to existing patterns → find pattern. Bugs claimed → confirm.

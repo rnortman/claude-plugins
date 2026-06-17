@@ -22,7 +22,7 @@ The result is a workflow you can actually follow on a ten-finding review without
 ### Authoring subagents (one-shot per spawn)
 
 - **explorer** — Surveys the codebase for context relevant to the request. Cites source code only, never design docs.
-- **requirements-refiner** — Turns the user's request plus the exploration report into a refined spec; also acts as the responder in requirements review.
+- **requirements-refiner** — Enriches the user's brief request with codebase context from the exploration, resolves ambiguities, and flags tensions between the request and the codebase. Output is "a better prompt" in ELI5-style prose, not a formal spec. Also acts as the responder in requirements review.
 - **designer** — Writes the initial design doc; also acts as the responder in design review. Self-cleans drafts via the `cleanup-editor` skill.
 - **implementer** — Writes code per the approved design, runs build/tests, commits; also acts as the responder in code review.
 
@@ -33,10 +33,10 @@ Each has a focused rubric baked into its agent definition. Orchestrator spawns t
 Findings are numbered with a per-reviewer prefix (`security-1`, `correctness-3`, etc.). Each finding includes file:line, what's wrong, why, and a **consequence** statement. Reviewers do not assign severity tags — severity is judged downstream from the consequence.
 
 **Pre-design:**
-- **requirements-reviewer** — Adversarial fact-check of the requirements doc against the original request and exploration.
+- **requirements-reviewer** — Adversarial fact-check of the refined request against the original request and exploration.
 
 **Pre-implementation:**
-- **design-reviewer** — Adversarial fact-check of the design doc against requirements.
+- **design-reviewer** — Adversarial fact-check of the design doc against the refined request.
 
 **Post-implementation thin pre-pass** (parallel, diff-only):
 - **slop-reviewer** — LLM writing tells, obvious unhandled cases, workarounds for existing bugs visible on the face of the diff.
@@ -56,9 +56,9 @@ Findings are numbered with a per-reviewer prefix (`security-1`, `correctness-3`,
 
 ### Adjudicator
 
-- **judge** — Spawned fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or the design / requirements doc), assesses severity from the consequence text, decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
+- **judge** — Spawned fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or the design / refined request), assesses severity from the consequence text, decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
 
-The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention, or Open-Questions entry in the requirements doc), or **Won't-Do** (requires written rationale arguing the change would actively harm the artifact).
+The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention, or Open-Questions entry in the refined request), or **Won't-Do** (requires written rationale arguing the change would actively harm the artifact).
 
 ### Skills
 

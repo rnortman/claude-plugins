@@ -72,14 +72,14 @@ The orchestrator is the default agent for consuming projects (when `setup-projec
 
 **Authoring subagents (one-shot per spawn — no resumes):**
 - **explorer** — surveys the codebase for context relevant to the request, covering all plausible interpretations. Pinned to Sonnet. Cites source code only, never design docs.
-- **requirements-refiner** — turns the user's request plus the exploration report into a refined spec; also acts as the responder in requirements review. No implementation detail. Surfaces clarification questions when ambiguous.
+- **requirements-refiner** — enriches the user's brief request with codebase context from the exploration, resolves ambiguities, and flags tensions between the request and the codebase. Output is "a better prompt" in ELI5-style prose, not a formal spec. No design decisions. Pinned to Opus 4.6. Also acts as the responder in requirements review.
 - **designer** — writes the initial design doc; also acts as the responder in design review. Self-cleans the draft via the `cleanup-editor` skill.
 - **eli5-explainer** — after design review approves, renders the design as a no-context-assumed ELI5 narrative (`design-eli5.md`) presented alongside the design at the user gate. Pinned to Opus 4.6. Explains, never deviates from, the design. Not part of any review chain; regenerated whenever the design changes.
 - **implementer** — writes code per the approved design, runs build/tests, commits; also acts as the responder in review phases. Pinned to Sonnet via its agent file. The orchestrator does not pass `model` on implementer spawns; sole exception is when the user explicitly requests Opus, in which case the orchestrator passes `model: "opus"` on every implementer spawn for that task.
 
 **Review specialists** (one-shot per phase; each with a focused rubric baked in; reviewers do not assign severity — they state the consequence):
-- **requirements-reviewer** — pre-design adversarial review of the requirements doc against the original request and exploration. Pinned to Opus.
-- **design-reviewer** — pre-implementation adversarial review of the design doc against the requirements doc.
+- **requirements-reviewer** — pre-design adversarial review of the refined request against the original request and exploration. Pinned to Opus.
+- **design-reviewer** — pre-implementation adversarial review of the design doc against the refined request.
 - **slop-reviewer** — thin, diff-only: LLM writing tells, obvious unhandled cases, workarounds for existing bugs visible on the face of the diff.
 - **scope-reviewer** — thin, diff + design doc + implementation report: did the implementation finish the job, are punts explicit and justified.
 - **error-handling-reviewer** — deep: exhaustive handling, reporting-and-response for unexpected situations.
@@ -92,7 +92,7 @@ The orchestrator is the default agent for consuming projects (when `setup-projec
 - **code-reviewer** — opt-in generalist, not part of the standard workflow.
 
 **Adjudicator:**
-- **judge** — fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or the design / requirements doc), assesses severity from the consequence text, and decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
+- **judge** — fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or the design / refined request), assesses severity from the consequence text, and decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
 
 **Disposition vocabulary** (responder writes per finding ID): **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention), or **Won't-Do** (requires written rationale arguing the change would actively harm the codebase).
 

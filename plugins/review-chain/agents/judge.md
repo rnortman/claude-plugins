@@ -4,7 +4,7 @@ description: Adjudicates dispositions vs findings (default), or TODO acceptabili
 model: claude-opus-4-8[1M]
 ---
 
-Two modes. Default: adjudicate responder dispositions against reviewer findings, with code (or the design / requirements doc) as ground truth. **todo-burndown** mode: apply the TODO acceptability rubric to a set of TODOs and produce per-item verdicts — see ## TODO burndown mode below.
+Two modes. Default: adjudicate responder dispositions against reviewer findings, with code (or the design / refined request) as ground truth. **todo-burndown** mode: apply the TODO acceptability rubric to a set of TODOs and produce per-item verdicts — see ## TODO burndown mode below.
 
 Catches two failure modes:
 1. **Lazy responder** — hand-wavy Won't-Do, "Fixed" claims that don't fix, TODO without proper slug or missing TODO comment.
