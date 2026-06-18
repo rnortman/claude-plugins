@@ -65,6 +65,7 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
 - **/simplify** — User-facing convenience for ad-hoc review outside the full workflow. Runs quality, reuse, and efficiency reviewers in parallel against the current diff and applies the fixes.
 - **/cleanup-editor** — Invoked by the designer (and available to any author) to self-clean a draft for clarity, contradictions, and answerable open questions.
 - **/orchestrator** (skill version of the orchestrator agent) — Lets you trigger the orchestrator's workflow as a skill from any agent.
+- **/configure-models** — Generates (and optionally edits) the local `review-chain-models.conf` consumed by the `model-override` hook, so you can re-pin any agent's model per-project or per-user without editing agent files or publishing. Wraps the deterministic template generator bundled in the skill.
 
 ### Hooks
 
@@ -80,6 +81,22 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
   | *a model* (e.g. `opus`, `haiku`, `claude-opus-4-8`) | Override `Explore`'s model to that model. |
 
   Set it in any shell or project where you want different behavior, e.g. `export REVIEW_CHAIN_EXPLORE_HOOK=off`. The hook fails open: if `jq` is missing or the input can't be parsed, it does nothing and the spawn proceeds unmodified.
+
+- **model-override** (`PreToolUse`) — Re-pins the model an agent runs on **without editing its agent file or publishing a new plugin version**. Every agent's model is normally pinned in its definition (`implementer` → Sonnet, the deep reviewers → Opus, etc.); this hook lets you override those pins per-project or per-shell. It fires on every agent spawn and resolves a model by precedence (first hit wins):
+
+  | Priority | Source | Example |
+  | :--- | :--- | :--- |
+  | 1 | env `REVIEW_CHAIN_MODEL_<AGENT>` | `REVIEW_CHAIN_MODEL_IMPLEMENTER=opus` |
+  | 2 | env `REVIEW_CHAIN_MODEL_ALL` | `REVIEW_CHAIN_MODEL_ALL=haiku` |
+  | 3 | an explicit model the orchestrator already chose for the spawn | *(respected; config below defers to it)* |
+  | 4 | `./.claude/review-chain-models.conf` (project) | `implementer = opus` |
+  | 5 | `~/.claude/review-chain-models.conf` (user) | `* = opus` |
+
+  `<AGENT>` is the agent name upper/snake-cased — `requirements-refiner` → `REVIEW_CHAIN_MODEL_REQUIREMENTS_REFINER`. Env vars beat everything (they are the operator's deliberate override); the config file only fills in where the orchestrator didn't already make an explicit choice. With nothing set, the agent's own frontmatter pin governs.
+
+  To set up the config file, run **`/configure-models`** (see Skills below). It reads every agent's current pin and writes a fully-commented template — all lines commented out, so it overrides nothing until you edit it — and can also activate specific overrides for you (e.g. "set implementer to opus"). Use `/configure-models --project` or `--user` to choose the destination.
+
+  Config format is one `agent = model` per line (`#` comments and blank lines ignored; `* = model` applies to every agent; a value of `inherit`/`default`/`-`/empty means "no override"). The built-in `Explore` agent is handled by `intercept-explore` above, not this hook. Fails open like the other hook.
 
 ## Workflow shape
 

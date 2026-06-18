@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.4.0 — 2026-06-17
+
+Add a second `PreToolUse` hook to re-pin agent models from local config / env vars, plus a `/configure-models` skill to set it up.
+
+- **model-override** (new `PreToolUse` hook, `hooks/hooks.json` + `hooks/model-override.sh`): overrides the model an agent runs on without editing its agent file or publishing a new version. Fires on every `Agent`/`Task` spawn and resolves a model for the `subagent_type` by precedence (first hit wins): per-agent env var `REVIEW_CHAIN_MODEL_<AGENT>` (e.g. `REVIEW_CHAIN_MODEL_IMPLEMENTER=opus`), blanket `REVIEW_CHAIN_MODEL_ALL`, an explicit model the orchestrator already passed on the spawn (respected — config defers to it, env overrides it), then `./.claude/review-chain-models.conf` (project) and `~/.claude/review-chain-models.conf` (user). Strips the `review-chain:` spawn prefix so config keys are bare names; works for any `subagent_type`. Ignores `Explore` (owned by `intercept-explore`, which has the `deny` mode). Rewrites the tool input via `updatedInput`; fails open if `jq` is missing or input is unparseable.
+- **configure-models** (new skill, `skills/configure-models/`): generates and optionally edits the local `review-chain-models.conf`. Wraps a deterministic template generator (`references/gen-model-config.sh`) that reads every agent's current model pin and writes a fully-commented config (all lines commented, so it overrides nothing until edited); supports `--project` / `--user` / stdout, refuses to clobber without `-f`, and locates the plugin's `agents/` dir by walking up from itself. The skill can also activate specific overrides on request (e.g. "set implementer to opus").
+- **README** + **CLAUDE.md**: document the hook's precedence table, the config file format, and the `/configure-models` entry point.
+
 ### 0.3.0 — 2026-06-17
 
 Rework requirements-refiner: enriched prompt instead of formal spec.
