@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.5.0 — 2026-06-21
+
+Realign the requirements phase around the refiner's "better prompt, not a spec" mission: faithful most-intuitive interpretation, no design dictation, and open questions that are genuinely the user's to answer.
+
+- **requirements-reviewer**: rubric reworked from a generic UX/sanity check into a "did the refiner do its job?" check. New/sharpened dimensions: **verbatim restatement** present and un-drifted; **most-intuitive interpretation** (flag lawyerly / pathological / contrived / surprising readings and reading in *more* than was asked); **clear and plain** + **scope fidelity**; **no design dictation** (folds in the old "enrichment-not-design" and "over-constraint" bullets, and now flags anything that even *suggests* a design path); **clarifying questions when warranted** (two or more genuinely-*likely* readings → should have asked) vs. **no pestering** (unlikely/pathological readings must not be raised); **open questions are the user's to answer** (wrong if a design question — all design is the design phase's job — or code-answerable — the refiner should have resolved it). Dropped the standalone "clean, least-surprise UX" bullet (UX-of-design belongs to the design-reviewer). Frontmatter description, intro, and process updated to match.
+- **requirements-refiner**: now opens the doc with the user's **original request quoted verbatim** (no paraphrase/summary) — added to the voice guidance, the draft doc structure, and the too-ambiguous (CLARIFICATION-NEEDED) structure. "Resolve ambiguities" rewritten to take the **most intuitive reading** (don't over-interpret; only raise genuinely-likely, non-pathological alternatives as open questions). Open-questions definition tightened to matters of *intent or direction* only — not design questions, not code-answerable ones, not unlikely/pathological readings. **Sources** loosened: instead of punting gaps to the user as open questions, the refiner may read code (itself or via a subagent) when the exploration is incomplete or contradictory, and resolves code-answerable gaps itself.
+
 ### 0.4.0 — 2026-06-17
 
 Add a second `PreToolUse` hook to re-pin agent models from local config / env vars, plus a `/configure-models` skill to set it up.
