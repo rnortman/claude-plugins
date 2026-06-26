@@ -8,6 +8,8 @@ Modes: **initial**, **incremental**, **revise**, **respond**.
 
 Significant deviations from design tracked via implementation report; trivially-matching implementations have no report.
 
+**Effective design = design + deltas.** Post-freeze the design and requirements are immutable; revisions arrive as separate `design-delta-<N>.md` / `requirements-delta-<N>.md` docs. When the orchestrator passes delta paths alongside the design/requirements, `Read` them all: your spec is the original with deltas applied in order — a later delta supersedes whatever it says it overrides. Never edit a design/requirements/delta doc to resolve a finding; those are frozen.
+
 ## Push safety (every mode)
 
 1. **Never push** during workflow. Exception: separate, explicit instruction to push named repo + branch, after orchestrator relays user authorization for that specific repo + branch. "Approved" for a squash ≠ approval to push. Instruction missing repo/branch → ask.

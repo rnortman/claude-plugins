@@ -63,7 +63,7 @@ User-supplied instructions for a subagent: relay *verbatim* in addition to the n
 
 If the project has a documentation standard (e.g., ADR dirs), follow that standard. Create a workflow directory.
 
-Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md`, `implementation-report.md` (only when deviations exist), `implementation-log.md` (incremental mode only), `notes-<phase>-<reviewer>.md`, `dispositions-<phase>.md`, `judge-verdict-<phase>.md`, `escalation-<phase>.md`.
+Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md`, `implementation-report.md` (only when deviations exist), `implementation-log.md` (incremental mode only), `notes-<phase>-<reviewer>.md`, `dispositions-<phase>.md`, `judge-verdict-<phase>.md`, `escalation-<phase>.md`. Post-freeze spec revisions: `requirements-delta-<N>.md`, `design-delta-<N>.md`, `design-eli5-delta-<N>.md` (see **freeze**).
 
 No-VCS: tell implementer "no-vcs mode"; reviewers "no base — review working tree."
 
@@ -120,13 +120,31 @@ Design-review APPROVED → spawn `eli5-explainer`. Pass: design path, requiremen
     - Default: fresh designer respond with user-notes path → fresh judge with user-notes + dispositions + design → fresh `eli5-explainer` if the design changed. Loop 19.
     - Opt-in agent re-review (only if user requests): fresh design-reviewer **with user-notes path so it does not override user** → responder vs combined notes → judge → fresh `eli5-explainer` if the design changed.
 
+### freeze — lock the spec
+
+Before the first `implementer` spawn, lock the spec. Frozen set: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md`, plus any delta docs as they are created.
+
+- Commit the frozen artifacts (the spec-freeze commit). Record its hash as `freeze`. Untracked/scratch working dir or no-VCS: record a checksum of each frozen file instead of a commit.
+- From here on these files are immutable. No agent revises them in place; you never edit them yourself.
+- **After every implementer commit** (initial, each increment, each rework, each ship-gate revision) verify the frozen set is byte-unchanged: `git diff --quiet <freeze> -- <frozen paths>` (or re-check checksums). Any difference = an agent edited a frozen spec → STOP: restore from freeze (`git checkout <freeze> -- <path>`), surface as a violation, and re-route the intended change through a delta doc.
+
+### spec deltas — post-freeze revisions
+
+A requirements or design change needed after freeze? Never touch the frozen doc. Capture the change in a NEW delta doc that references the original and records **only the delta** (what changes / is added / removed / superseded), not a rewrite:
+
+- Design change → fresh `designer` writes `design-delta-<N>.md` (N = 1, 2, …), referencing `design.md` + prior deltas.
+- Requirements change → fresh `requirements-refiner` writes `requirements-delta-<N>.md`, same shape.
+- Effective spec = original + deltas in order. Wherever you pass `design path` / `requirements path` downstream (implementer, reviewers, judge, eli5), also pass every delta path in order.
+- A post-freeze design delta surfaced to the user → fresh `eli5-explainer` renders a NEW `design-eli5-delta-<N>.md` (never overwrite the frozen eli5).
+- A delta doc joins the frozen set once written (commit / checksum it); it is then immutable too — further changes are higher-numbered deltas.
+
 ### implement
 
 Default: single-shot. Incremental loop is opt-in (user-requested only).
 
 21. Spawn `implementer` mode "initial". Pass: design path, requirements path, working dir, target implementation-report path, base commit.
 22. Implementer commits. Reply: HEAD + (optional) implementation-report path. Report exists ONLY if significant deviations from design.
-23. Clarification-needed doc returned → fresh designer revise + fresh implementer.
+23. Clarification-needed doc returned → fresh designer writes `design-delta-<N>.md` (never revises frozen `design.md`) + fresh implementer (pass design path + all delta paths). See **spec deltas**.
 24. Toolchain stop → escalate to user.
 
 #### Incremental (opt-in)
@@ -162,7 +180,7 @@ Replaces 21–22. Log path: `implementation-log.md`. No reviews between incremen
 36. User approves squash → you squash to base with clean message (mechanical git).
 37. Push: separate, explicit user authorization for named repo + branch. "Approved squash" ≠ "approve push".
 
-Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user.md` verbatim, numbered if multiple): fresh implementer respond + commit → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
+Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user.md` verbatim, numbered if multiple): if the revision changes the design or requirements (not just code), first capture it as a delta doc (fresh designer → `design-delta-<N>.md` / fresh refiner → `requirements-delta-<N>.md`; frozen docs never edited) before the implementer; code-only changes go straight to the implementer. Then: fresh implementer respond + commit → re-check the frozen set → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path + delta paths to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
 
 ### todo burndown (alternate entry)
 
@@ -208,6 +226,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - All structured content in docs. Reply bodies = paths/hashes only.
 - Never pass `model` (inherit / agent-pinned). Sole exception: user-requested Opus on the implementer.
 - All agents one-shot.
+- Spec freeze: at implementation start, `exploration.md` / `requirements.md` / `design.md` / `design-eli5.md` are committed (or checksummed) and frozen. Post-freeze they are immutable — revisions go in new `*-delta-<N>.md` docs that reference the originals and record only the delta; effective spec = original + deltas. Re-verify the frozen set is unchanged after every implementer commit; a modified frozen doc halts the workflow.
 - Every implementer revision = a commit. Squash only after user approval.
 - No mid-flow pushes. Ever. Push only on separate explicit authorization for named repo + branch.
 - No force-push. Push fails on remote ahead → escalate.
@@ -223,6 +242,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Pass `model` on any spawn. Sole exception: user-requested Opus on the implementer.
 - Spawn designer (design stage) without separate user go-ahead post-requirements.
 - Read any artifact into your context.
+- Edit a frozen artifact post-freeze, or let any agent do so. Revisions go in new `*-delta-<N>.md` docs. A modified frozen doc halts the workflow until restored.
 - Restate rubrics in prompts.
 - Override judge ESCALATE.
 - Squash or push without explicit user approval (separately).

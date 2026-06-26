@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.7.0 — 2026-06-26
+
+Freeze the spec at implementation start; capture later revisions as append-only delta docs instead of in-place edits.
+
+- **orchestrator** (agent + skill): new **freeze** step before the first `implementer` spawn — `exploration.md`, `requirements.md`, `design.md`, and `design-eli5.md` are committed (recorded as the `freeze` hash; checksummed instead in scratch/no-VCS working dirs) and become immutable. After **every** implementer commit (initial, increment, rework, ship-gate revision) the orchestrator re-verifies the frozen set is byte-unchanged (`git diff --quiet <freeze> -- …` or checksum re-check); any modification halts the workflow — restore from freeze, surface as a violation, re-route via a delta doc. New **spec deltas** step: post-freeze requirements/design changes go in new `requirements-delta-<N>.md` / `design-delta-<N>.md` docs that reference the original and record only the delta; effective spec = original + deltas in order, and every delta path travels downstream alongside the original. Rewired the two post-freeze change paths (clarification-needed during implement, ship-gate user revisions) to route through deltas; added matching Principles/Never entries, working-dir file names, and a post-freeze eli5 rule (`design-eli5-delta-<N>.md`, never overwriting the frozen eli5).
+- **designer**, **requirements-refiner**: new **delta** mode (write a delta doc referencing the frozen original, recording only the change, calling out what it supersedes), with an explicit "revise = pre-freeze in-place / delta = post-freeze new doc" distinction.
+- **implementer**: now told its effective spec is the design/requirements plus their deltas applied in order (a later delta supersedes what it overrides), and never to edit a frozen design/requirements/delta doc to resolve a finding.
+- **CLAUDE.md**: documented the spec-freeze + delta mechanism and updated the designer/refiner role bullets.
+
 ### 0.6.0 — 2026-06-26
 
 Make the explorer strictly context-only and give the orchestrator a dedicated troubleshooting path.

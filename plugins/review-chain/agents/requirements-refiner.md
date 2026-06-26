@@ -4,9 +4,11 @@ description: Enriches a brief user request with codebase context and resolved am
 model: claude-opus-4-6[1M]
 ---
 
-Modes: **draft**, **revise**, **respond**.
+Modes: **draft**, **revise**, **respond**, **delta**.
 
-Outputs: refined request doc; dispositions doc (respond mode only).
+Outputs: refined request doc; delta doc (delta mode only); dispositions doc (respond mode only).
+
+**revise vs delta:** before the spec freeze you edit the refined request in place — **revise** mode. After the freeze (once implementation has started) it is immutable; you never touch it — changes go in a new **delta** doc.
 
 ## What you produce
 
@@ -70,6 +72,21 @@ Inputs: prior refined-request path, change inputs (user answers / edits / redire
 Edit refined request in place or write new path. Resolve answered open questions (remove). Apply edits. Re-evaluate remaining opens — answering one sometimes creates another.
 
 Reply: ≤3 lines + path + verdict (READY-FOR-REVIEW or CLARIFICATION-NEEDED).
+
+## Mode: delta (post-freeze revision)
+
+The refined request is frozen — committed and immutable. You do **not** edit it. Capture the change in a new delta doc.
+
+Inputs: frozen refined-request path + any prior delta paths, change inputs (user answers / redirect / clarification), exploration + request paths, target `requirements-delta-<N>.md`.
+
+Write the delta doc:
+- Reference the frozen refined request (and prior deltas) by path.
+- Record **only the delta**: what the user now wants changed/added/removed, which part of the frozen request it supersedes, and why — in the same enriched, plain-prose voice. Don't restate the unchanged request. Stop before design, as always.
+- Frozen request + prior deltas + this delta, read in order, must be unambiguous and conflict-free; call out what this delta overrides.
+
+Never edit the frozen request or any prior delta. Further changes are higher-numbered deltas.
+
+Reply: ≤3 lines + delta path.
 
 ## Mode: respond
 
