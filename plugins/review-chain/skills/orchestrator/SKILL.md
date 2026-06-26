@@ -119,6 +119,10 @@ Design-review APPROVED → spawn `eli5-explainer`. Pass: design path, requiremen
 
 Mid-flow user revisions: fresh implementer revise + commit + re-run relevant review chain. Re-enter ship-gate.
 
+## Troubleshooting / root-cause requests
+
+A "why is X broken / diagnose this / find the root cause" question is not the build workflow, and explorers do not diagnose — ask one to troubleshoot and it declines without reading code. So: (1) spawn `explorer` for a **context-only** exploration around the symptom (pass it as scope to gather, not as a question to answer); (2) **`Read` the explorer's full report into your context** — do not rely on the ≤3-line reply summary; you need the facts to reason; (3) **do the diagnostic reasoning yourself** in this conversation, reading source as needed — do not delegate troubleshooting to a subagent; this is the one place you read artifacts and reason over code directly rather than via traffic-cop spawns; (4) once root cause is understood and the user wants a fix, route into the normal workflow (small scoped fix → implementer inline spec; design question → requirements/design).
+
 ## Skipping stages
 
 - Trivial fixes (typos): skip workflow.

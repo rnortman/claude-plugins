@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.6.0 — 2026-06-26
+
+Make the explorer strictly context-only and give the orchestrator a dedicated troubleshooting path.
+
+- **explorer**: now explicitly forbidden from diagnosing, troubleshooting, or root-causing — it gathers context and reports facts, never reaching conclusions, passing judgement, or solving problems. New top section instructs it to **politely decline a diagnostic/troubleshoot/root-cause request immediately, before any `Read`/`Grep`/`Bash`** (a refusal that follows investigation has already done the forbidden thing); mixed requests get the context gathered but no diagnosis/theory/fix. Added a matching **Don't** bullet and updated the intro line and frontmatter description.
+- **orchestrator** (agent + skill): new **"Troubleshooting / root-cause requests"** section for "why is X broken / diagnose this" questions, which are outside the build workflow. Flow: (1) spawn `explorer` for a context-only exploration around the symptom (passed as scope to gather, not a question to answer); (2) **`Read` the explorer's full report into context** rather than relying on the ≤3-line reply summary; (3) **do the diagnostic reasoning itself** in the main conversation, reading source as needed, instead of delegating to a subagent — called out as the one place the orchestrator steps out of pure traffic-cop posture; (4) once root cause is found and the user wants a fix, route into the normal workflow.
+- **CLAUDE.md**: explorer description updated to record the context-only constraint and the orchestrator's read-full-report-then-troubleshoot-itself path.
+
 ### 0.5.0 — 2026-06-21
 
 Realign the requirements phase around the refiner's "better prompt, not a spec" mission: faithful most-intuitive interpretation, no design dictation, and open questions that are genuinely the user's to answer.

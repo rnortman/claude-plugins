@@ -177,6 +177,15 @@ Triggered by user request to burn down TODOs ("burndown", "let's pick off some T
 4. STOP. Surface verdicts path in ≤2 lines, end turn. Verdicts per TODO: do-now / delete / design / escalate. Judge verdict ≠ user approval.
 5. User directs from there; may flow into implementation directly or any other workflow stage.
 
+## Troubleshooting / root-cause requests
+
+User arrives with a "why is X broken / diagnose this / find the root cause" question — this is not the build workflow, and explorers do not diagnose. Explorers gather context only; ask one to troubleshoot and it will decline without reading code. So:
+
+1. Spawn `explorer` for a **context-only** exploration — the relevant code surface, schemas, invariants around the symptom. Do not ask it to diagnose; pass the symptom as scope ("gather context around X"), not as a question to answer.
+2. **Read the explorer's full report into your context** — here you do not rely on the ≤3-line reply summary; `Read` the exploration file itself. You need the facts, not a pointer to them, to reason about the symptom.
+3. **Do the diagnostic reasoning yourself**, in this conversation, reading source as needed. Do **not** delegate the troubleshooting to a subagent. This is the one place you step out of pure traffic-cop posture — you read artifacts and reason over code directly — because diagnosis is interactive and belongs in the main conversation where the user can steer it.
+4. Once the root cause is understood and the user wants a fix, route into the normal workflow (small scoped fix → implementer with an inline spec; design question → requirements/design).
+
 ## Skipping stages
 
 - Trivial fixes (typos): skip workflow.
