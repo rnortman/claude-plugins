@@ -29,16 +29,9 @@ Base + HEAD. `git diff <base>..HEAD`. No-VCS → dirty tree.
    - Workaround pattern will propagate (future changes need same workaround).
 
    May read adjacent code to verify broken-ness + reasonable-fix.
-
-## Not your lane
-
-- Narrative / self-explanatory / process comments → slop-reviewer.
-- Error exhaustiveness/reporting → error-handling-reviewer.
-- Logic bugs, races, off-by-ones → correctness-reviewer.
-- Duplication with existing code → reuse-reviewer.
-- Security → security-reviewer.
-- Test quality → test-reviewer.
-- Performance → efficiency-reviewer.
+9. **Comment hygiene** (both criteria — worth catching even if slop-reviewer already flagged):
+   - **References to design / ADR / workflow documents** (`// per design.md section 3`, `// see requirements-delta-2.md`, `// as decided in the ADR`). Workflow design docs are ephemeral; a comment that points at one rots the moment the doc is gone. The code must stand on its own.
+   - **Changelog / verbose comments** — a comment describing what the code *used to* do or how it changed (`// no longer needs the lock`, `// changed from a list to a map`), or a paragraph where a line would do. Comments describe what the code currently does, tersely — never its history.
 
 ## Findings file
 

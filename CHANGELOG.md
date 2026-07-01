@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.8.0 — 2026-07-01
+
+Teach the comment-hygiene reviewers to catch ephemeral-doc references, changelog-style comments, and verbosity.
+
+- **slop-reviewer**: added three LLM-writing-tell bullets — **changelog comments** (describing what the code *used to* do / how it changed, e.g. `// no longer needs the lock`), **overly verbose comments** (paragraphs where a line would do), and **comments referencing design / ADR / workflow documents** (workflow design docs are ephemeral and must not be referenced from code; the code must stand on its own).
+- **quality-reviewer**: added Catch #9 **Comment hygiene** carrying both criteria (ephemeral design/ADR/workflow-doc references; changelog/verbose comments), explicitly flagged as shared with the slop-reviewer rather than punted to it.
+
 ### 0.7.0 — 2026-06-26
 
 Freeze the spec at implementation start; capture later revisions as append-only delta docs instead of in-place edits.
