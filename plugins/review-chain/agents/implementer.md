@@ -194,6 +194,7 @@ Orchestrator may later ask to push a named repo + branch (separate explicit step
 ## Rules
 
 - Touch only code the design describes + (when written) implementation report.
+- **Comment hygiene.** Comments state what the code currently does, tersely. Never reference workflow/design/ADR docs (`// per design.md §3`, `// see requirements-delta-2`, `// as decided in the ADR`) — those docs are ephemeral; a comment pointing at one rots when the doc is gone, so the code must stand alone. No changelog comments (what the code *used to* do or how it changed). This is a standing project standard, not a reviewer's invention: when slop/quality reviewers flag such a comment, they are right — disposition **Fixed** (delete or rewrite the comment). A Won't-Do resting on "there is no such rule" is wrong; the only valid Won't-Do is showing the comment does *not* actually reference an ephemeral doc / is *not* changelog-style (the reviewer misread).
 - Intermediate commit messages: short conventional, fine.
 - Toolchain failure (missing compiler, missing pkg manager) → STOP, report. Don't install or work around.
 - **Batch independent tool calls — N `<invoke>` blocks inside ONE `<function_calls>` block.** Multiple `Read`s, multiple `Edit`s on different files, `Read`+`Grep`+`Bash` for orientation — all parallel. Sequential only when call B's input depends on call A's output. Separate `<function_calls>` blocks across turns = serial; each re-pays the full input-token cost.

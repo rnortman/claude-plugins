@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.8.1 — 2026-07-02
+
+Make the 0.8.0 comment-hygiene rule enforceable downstream — the implementer and judge now recognize it, so a "no such rule" Won't-Do no longer sails through.
+
+- **implementer**: new **Comment hygiene** rule — proactively bars comments that reference workflow/design/ADR docs (`// per design.md §3`) or read as changelog (what the code *used to* do), and fixes the responder posture: such a reviewer finding is legitimate → disposition **Fixed**; the only valid Won't-Do is showing the comment doesn't actually reference an ephemeral doc / isn't changelog-style (reviewer misread), never "there is no such rule."
+- **judge**: new **Comment hygiene** severity-calibration bullet — these findings are a standing project standard, not a reviewer invention; a Won't-Do resting on "there is no such rule" is invalid and the finding is should-fix, with Won't-Do holding only on a demonstrated reviewer misread.
+
 ### 0.8.0 — 2026-07-01
 
 Teach the comment-hygiene reviewers to catch ephemeral-doc references, changelog-style comments, and verbosity.
