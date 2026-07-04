@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.8.2 — 2026-07-03
+
+Give the judge a code-owner's posture and let it propose concrete in-scope fixes.
+
+- **judge**: new framing — **a code owner, not a lawyer**. Its interest is the true long-term health of the codebase and doing the right thing by it, not winning a procedural argument or clearing findings off a list. It pushes back when the responder takes the easy way out (partial fix, Won't-Do of convenience, a disposition satisfying the letter of a finding while leaving the code worse than an owner would accept), even where the finding as written undersold the problem — and doesn't manufacture work that doesn't serve the code.
+- **judge**: on a disputed item, may now **propose a concrete fix design** for a problem still standing (e.g. a race patched on one path but not another), giving the responder something to build rather than only naming what's wrong. Hard-bounded: the proposal must stay within the approved design's scope and structure; a fix that would go well outside the original design is a design change → **ESCALATE**, not a verdict-smuggled redesign.
+
 ### 0.8.1 — 2026-07-02
 
 Make the 0.8.0 comment-hygiene rule enforceable downstream — the implementer and judge now recognize it, so a "no such rule" Won't-Do no longer sails through.
