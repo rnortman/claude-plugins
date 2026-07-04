@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.9.0 — 2026-07-03
+
+Make incremental the only implementation mode and review it in rounds — every 5 increments, with silent squashes between rounds and a human gate only at the end.
+
+- **orchestrator** (agent + skill): removed single-shot ("initial") implementation. Implementation now always runs as **incremental rounds** — fresh `implementer` "incremental" spawns, one increment each, grouped into rounds of up to 5. A review round (pre-pass + deep) fires when the implementer replies `done` **or** the round hits its 5th increment. The orchestrator tracks a **round base** (the commit reviews diff against; the original base for round 1, then each intermediate squash) and an increment counter reset each round. A round reviews only `round base..HEAD`. When an **intermediate** round (5-cap, still `in progress`) clears the final judge, the orchestrator squashes that round's commits into one commit with **no user gate** and makes that squash the next round's base — which is why each round's reviews see only its own commits. Only the **final** round (implementer replied `done`) reaches the human ship-gate, which squashes all the way back to the original base after user approval. Freeze re-verification now also fires after each intermediate squash; Principles/Never amended so the "no squash without approval" rule binds the ship-squash only (intermediate squashes are automatic).
+- **implementer**: dropped the `initial` mode entirely (incremental is the only implementation mode); promoted the clarification-needed handling to a top-level, all-mode section (it was nested under `initial`). Retired the separate **implementation report** — the append-only `implementation-log.md` is the single implementation record; `revise`/`respond` modes note deviations in the log or dispositions doc rather than a report. Incremental inputs now name the **round base**.
+- **scope-reviewer**: made **round-aware**. Given a round type (intermediate | final), it holds the implementer to the **implementation log's claims for that round**, not the whole design — *unless* the round is the final `done` round, where the yardstick becomes the whole design checked against the full log (earlier rounds are squashed out of the diff, so it's a log-vs-design check). New **authorization** check every round: everything the log claims must trace to the **effective design (design + deltas)** — undesigned/undelta'd work is drift and gets flagged. Now receives the design deltas and the log in place of the retired report.
+- **CLAUDE.md**, **README**: documented the incremental-rounds flow, the intermediate-squash-no-gate / final-round-ship-gate distinction, the log-as-record, and the round-aware scope-reviewer.
+
 ### 0.8.2 — 2026-07-03
 
 Give the judge a code-owner's posture and let it propose concrete in-scope fixes.

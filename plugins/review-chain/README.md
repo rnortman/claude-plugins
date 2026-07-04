@@ -24,7 +24,7 @@ The result is a workflow you can actually follow on a ten-finding review without
 - **explorer** — Surveys the codebase for context relevant to the request. Cites source code only, never design docs.
 - **requirements-refiner** — Enriches the user's brief request with codebase context from the exploration, resolves ambiguities, and flags tensions between the request and the codebase. Output is "a better prompt" in ELI5-style prose, not a formal spec. Also acts as the responder in requirements review.
 - **designer** — Writes the initial design doc; also acts as the responder in design review. Self-cleans drafts via the `cleanup-editor` skill.
-- **implementer** — Writes code per the approved design, runs build/tests, commits; also acts as the responder in code review.
+- **implementer** — Writes code per the approved design in small increments (incremental is the only mode), runs build/tests, commits each increment, and keeps an append-only implementation log; also acts as the responder in code review.
 
 ### Review specialists
 
@@ -40,7 +40,7 @@ Findings are numbered with a per-reviewer prefix (`security-1`, `correctness-3`,
 
 **Post-implementation thin pre-pass** (parallel, diff-only):
 - **slop-reviewer** — LLM writing tells, obvious unhandled cases, workarounds for existing bugs visible on the face of the diff.
-- **scope-reviewer** — Did the implementation finish the job? Are punts explicit and justified?
+- **scope-reviewer** — Did this round deliver what its implementation-log entries claim (and, on the final `done` round, is the whole design implemented)? Does everything the log claims actually trace to the design or a design delta? Are punts explicit and justified? Round-aware.
 
 **Post-implementation deep pass** (parallel, may read surrounding code):
 - **error-handling-reviewer** — Exhaustive handling, reporting-and-response for unexpected situations.
@@ -103,11 +103,15 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
 ```
 explore → requirements → requirements-review → [user gate]
        → design → design-review → [user gate]
-       → implement → pre-pass review (slop + scope) → deep review (7 specialists)
-       → ship-gate (squash + push, separate user gates for each)
+       → implement (incremental rounds of ≤5 increments)
+           → per-round review: pre-pass (slop + scope) → deep review (7 specialists), over that round's commits only
+           → intermediate round (hit 5, still going): silent squash, NO user gate → the squash is the next round's base → repeat
+           → final round (implementer replied "done"): → ship-gate (squash to the original base + push, separate user gates)
 ```
 
 Each review phase: parallel reviewers → responder (with all notes paths) → judge. REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE. Escalations surface as a doc the user arbitrates. Requirements-review and design-review each run with a single reviewer; the same chain shape applies.
+
+Implementation is incremental only. Increments run in rounds; every round is reviewed by the full pre-pass + deep chain over just that round's commits. Intermediate rounds that pass are squashed automatically (no gate) so the next round starts from a clean base; only the final round — the one where the implementer declared the whole design `done` — surfaces to you at the ship-gate.
 
 ## Using it (as a user)
 
@@ -117,7 +121,7 @@ You drive by responding at gates. Between gates, subagents run and write artifac
 
 - **Requirements** (after refinement and agent review) — approve, supply answers, edit in place, or redirect.
 - **Design** (after agent design-review) — approve or revise.
-- **Ship-gate** — squash, then push. Each is a separate authorization (push requires the repo + branch named).
+- **Ship-gate** (final round only) — squash, then push. Each is a separate authorization (push requires the repo + branch named). Intermediate implementation rounds squash automatically between reviews with no gate; only the final round (the implementer declared the design `done`) stops here for you.
 
 **Providing feedback at a gate**, in order of preference:
 
