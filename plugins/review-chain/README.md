@@ -24,7 +24,7 @@ The result is a workflow you can actually follow on a ten-finding review without
 - **explorer** — Surveys the codebase for context relevant to the request. Cites source code only, never design docs.
 - **requirements-refiner** — Enriches the user's brief request with codebase context from the exploration, resolves ambiguities, and flags tensions between the request and the codebase. Output is "a better prompt" in ELI5-style prose, not a formal spec. Also acts as the responder in requirements review.
 - **designer** — Writes the initial design doc; also acts as the responder in design review. Self-cleans drafts via the `cleanup-editor` skill.
-- **implementer** — Writes code per the approved design in small increments (incremental is the only mode), runs build/tests, commits each increment, and keeps an append-only implementation log; also acts as the responder in code review.
+- **implementer** — Writes code per the approved design in incremental slices (incremental is the only mode), runs build/tests, commits each increment, and keeps an append-only implementation log; also acts as the responder in code review.
 
 ### Review specialists
 

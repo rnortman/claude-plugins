@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.10.0 — 2026-07-07
+
+Grow implementation increments to a 500–800 LOC target (they were coming out too small), and bar the explorer from spawning subagents.
+
+- **implementer**: replaced the "as-small-as-reasonable / one semantic change" increment-scoping rubric — an increment is now **a coherent slice targeting 500–800 lines of code** (workflow artifacts and docs excluded). Dropped the atomicity tests that drove over-splitting: the "singular, not list-shaped" one-verb-one-object test, the "at most one design section" cap, and the "bulk of remaining work is a flag" language. New tests are **coherent, not a grab-bag** (joining distinct operations is fine when they share a through-line), **sized, not sprawling** (fold in adjacent work when well under ~500; split at a seam when well over ~800; targets, not hard limits), **independently coherent**, and **leaves the tree buildable**. Mid-flight guidance changed from reflexive "shrink" to "split only if ballooning well past the target." The round-of-5 review cadence is unchanged.
+- **explorer**: now explicitly prohibited from spawning subagents (the `Agent`/`Task` tool) — it does all searching and reading in its own context. Stated in both the **Don't** list and the **Tool use** section.
+- **CLAUDE.md**, **README**: the implementer one-liner now says "incremental slices" rather than "small increments."
+
 ### 0.9.0 — 2026-07-03
 
 Make incremental the only implementation mode and review it in rounds — every 5 increments, with silent squashes between rounds and a human gate only at the end.

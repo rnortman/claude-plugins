@@ -6,7 +6,7 @@ model: sonnet
 
 Modes: **incremental**, **revise**, **respond**.
 
-Implementation is always incremental — many small increments, one per spawn. There is no single-shot mode. The implementation log (`implementation-log.md`) is the running record of what each increment shipped, with deviations, TODOs, and surprises noted inline; there is no separate implementation report.
+Implementation is always incremental — successive increments, one per spawn. There is no single-shot mode. The implementation log (`implementation-log.md`) is the running record of what each increment shipped, with deviations, TODOs, and surprises noted inline; there is no separate implementation report.
 
 **Effective design = design + deltas.** Post-freeze the design and requirements are immutable; revisions arrive as separate `design-delta-<N>.md` / `requirements-delta-<N>.md` docs. When the orchestrator passes delta paths alongside the design/requirements, `Read` them all: your spec is the original with deltas applied in order — a later delta supersedes whatever it says it overrides. Never edit a design/requirements/delta doc to resolve a finding; those are frozen.
 
@@ -39,7 +39,7 @@ Inputs: design path, requirements path, working dir, target log path, round base
 
 The **round base** is the commit the current review round diffs against (the previous round's squash, or the original base for the first round). You just commit each increment on top of HEAD; the orchestrator manages rounds and squashing.
 
-Multiple as-small-as-reasonable implementation increments. One log across increments. Each invocation appends.
+Multiple implementation increments, each a coherent slice targeting **500–700 lines of code** (not counting workflow artifacts or docs). One log across increments. Each invocation appends.
 
 Steps:
 
@@ -62,18 +62,17 @@ Your first two turns are fixed. Literal shape:
 No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: grepping or reading source to "orient" before the log Edit. The design IS your fully sufficient orientation for draft scope.*
 
 1. **Turn 1 — parallel `Read`s of input docs only.**
-2. **Turn 2 — single `Edit` appending draft scope to log.** **Small = one semantic change.** Draft → walk every test below against your own draft → if *any* trips, shrink and redraft → only then Edit. Don't submit a draft you haven't re-read against the rubric; the most common rejection is shipping the first draft unchecked.
+2. **Turn 2 — single `Edit` appending draft scope to log.** **An increment is a coherent slice targeting 500–700 lines of code** (workflow artifacts and docs don't count toward the line budget). Draft → walk every test below against your own draft → if *any* trips, adjust and redraft → only then Edit. Don't submit a draft you haven't re-read against the rubric.
 
-   Tests (any fail → shrink and redraft):
-   - **Singular, not list-shaped.** A draft is list-shaped if it joins distinct operations *in any form* — "and" / commas, numbered list, bulleted list, "all four sections", "all the helpers", "everything in §3", "X + its tests + the Makefile wiring", "sections 1–4". List-shape isn't a typographic question; it's a semantic one. One verb on one object. "Implement X and its tests" — fine, one change. "Implement X + Y" — two. "Implement all four helpers" — four. If your draft can be rephrased as "do N things", N is your increment count, not one. Pick one and ship the rest later.
-   - You could ship one half without the other and the remainder would still be coherent standalone next work.
-   - Multi-file is fine when files implement *the same* change (impl + its tests + a call site); not fine when each file is a different change.
-   - Touches at most one design section. Two or more design-section numbers in the draft → multiple increments.
-   - "Bulk of remaining work" / "rest of" / "finish off" / "wire it all up" / "the messaging stuff" is a *flag*, not a unit. Either you're at the genuine final step and what remains is provably atomic-indivisible (rare; argue it explicitly), or you're picking one piece. Don't reach for the end just because the end is close.
+   Tests (any fail → adjust and redraft):
+   - **Coherent, not a grab-bag.** The slice reads as one reviewable unit — a feature and its tests, a subsystem plus the call sites that exercise it, a family of related helpers. Joining distinct operations is fine when they share a through-line; bundling unrelated changes just to hit a line count is not. A grab-bag of independent changes with no through-line → split along the seams.
+   - **Sized, not sprawling.** Aim for 500–700 LOC of code. Well under ~500 and you're probably over-splitting — fold in the adjacent work that completes the slice. Well over ~700 and it's too large to review as one unit — split at a natural seam. These are targets, not hard limits: a naturally indivisible slice landing at 300 or 1,000 LOC is fine — don't pad it up or hack it down to hit the band.
+   - **Independently coherent.** You could ship this increment and the remainder would still be coherent standalone next work.
+   - **Leaves the tree buildable.** Changed modules build and their tests pass. Don't ship a slice that only makes sense once a later increment lands unless you TODO the gap.
 
-   Bias smaller. The draft decides what you explore next — not the other way around. Revise on the fly; **replace** with the shipped scope at step 6. If log doesn't exist: this is the first increment.
+   The draft decides what you explore next — not the other way around. Revise on the fly; **replace** with the shipped scope at step 6. If log doesn't exist: this is the first increment.
 3. Explore source only as the chosen scope requires.
-4. Implement. Scope growing? Shrink mid-flight; don't push through.
+4. Implement. Scope ballooning well past the target? Split at a seam mid-flight; don't push a runaway increment through.
 5. Build/test changed modules. Whole-repo green not required. Module tests pass if possible. Build errors blocking out-of-scope dependents OK.
 6. **Replace** the draft scope in the log with what actually shipped. File:line refs; flat bullet list. Note deviations, TODOs, surprises inline. **No "Remaining" / "Next" / "Future work" / "TODO for next increment" sections** — design + log imply what's left. See example below.
 7. Commit with `--no-verify` unless final increment. Final increment must pass pre-commit checks.

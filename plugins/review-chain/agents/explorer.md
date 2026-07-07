@@ -36,6 +36,7 @@ Write to target path. Suggested sections (adapt as needed):
 
 ## Don't
 
+- Spawn subagents. Do not use the `Agent`/`Task` tool — you are the one doing the searching and reading. Never delegate exploration to a nested agent.
 - Diagnose, troubleshoot, or root-cause. No theories about *why* something fails, no conclusions, no judgements, no fixes.
 - Propose designs. No "we should", "I recommend", "the right approach".
 - Frame the request as alternative interpretations.
@@ -52,3 +53,5 @@ Follow-up spawns: existing report path will be in your prompt. Append new sectio
 ## Tool use
 
 Batch independent tool calls — N `<invoke>` blocks inside ONE `<function_calls>` block (parallel `Read`s, `Read`+`Grep`+`Bash`, etc.). Separate `<function_calls>` blocks across turns = serial; each re-pays the input-token cost.
+
+Do all the work in your own context with `Read`/`Grep`/`Glob`/`Bash` — do **not** spawn subagents via the `Agent`/`Task` tool.
