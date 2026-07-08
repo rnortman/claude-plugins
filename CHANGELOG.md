@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.11.0 — 2026-07-07
+
+Stop overwriting review artifacts: they are the workflow's audit trail, so every review round and rework attempt now writes its own numbered file instead of clobbering the last.
+
+- **orchestrator** (agent + skill): established the principle that workflow artifacts are the **audit trail of the workflow itself** — not ground truth for the current state of the code, but 100% ground truth for what the workflow did at each step — so review artifacts are **never overwritten**. Introduced a two-ordinal naming scheme keyed by **round `R`** (review pass for requirements/design, implementation round for pre-pass/deep — pre-pass and deep of a round share `R`) and **rework attempt `A`** (1 = initial, 2 = the one rework round): `notes-<phase>-<reviewer>-r<R>.md`, `dispositions-<phase>-r<R>-a<A>.md`, `judge-verdict-<phase>-r<R>-a<A>.md`, `escalation-<phase>-{scope,respond}-r<R>[-a<A>].md`. Every review phase (requirements-review, design-review, pre-pass, deep), both user-gate revision loops, and the ship-gate revision path now pass numbered targets; the orchestrator tracks `R` (incremented at each new implementation round and each post-gate re-review) and never writes to a path that already exists. User chat-directive files are numbered too (`notes-<phase>-user-r<R>.md`, `notes-shipgate-user-<K>.md`). A judge ESCALATE is the verdict file itself, so numbering the verdict preserves every REWORK/ESCALATE verdict. Added an **Audit trail** principle and a **Never** entry to both files.
+- **implementer**, **scope-reviewer**: the two agents that hardcoded escalation filenames (`escalation-respond.md`, `escalation-prepass-scope.md`) now write to an orchestrator-supplied numbered escalation target (added to their Inputs).
+- Unchanged by design: pre-freeze in-place editing of the four spec docs (`design.md` / `requirements.md` / `design-eli5.md`, including eli5 regeneration) and the append-only `implementation-log.md`.
+- **CLAUDE.md**: documented the audit-trail / no-overwrite principle and the `r<R>`/`a<A>` naming scheme in the architecture section.
+
 ### 0.10.0 — 2026-07-07
 
 Grow implementation increments to a 500–800 LOC target (they were coming out too small), and bar the explorer from spawning subagents.

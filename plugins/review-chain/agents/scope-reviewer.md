@@ -26,6 +26,7 @@ The authorization check (question 2) applies **every round**: whatever the log c
 - Design doc path **+ any design-delta paths** (effective design = design + deltas in order).
 - Implementation log path — the append-only record of what each increment shipped across all rounds, with deviations, TODOs, and out-of-scope observations noted inline. This is where the implementer claims narrowings and punts.
 - Round type: **intermediate** or **final**.
+- Escalation target path (use only if you escalate).
 
 `git diff <base>..HEAD` is your scope. No-VCS → dirty tree.
 
@@ -66,7 +67,7 @@ Scope clean → one-line file: "No findings." Reply anyway.
 
 ## Direct ESCALATE authorization
 
-If your scope findings together name design-mandated work that constitutes *significant net new implementation* — multiple missing pieces, or one substantial piece — write `escalation-prepass-scope.md` in working dir **in addition to** the findings file. Per relevant scope finding: ID, what's missing, your assessment that aggregate scope warrants re-entering implementation rather than respond-mode patching. Recommend: resume incremental, revise design, or other.
+If your scope findings together name design-mandated work that constitutes *significant net new implementation* — multiple missing pieces, or one substantial piece — write to the escalation target path the orchestrator supplied (of the form `escalation-prepass-scope-r<R>.md`) in working dir **in addition to** the findings file — never a fixed reused name. Per relevant scope finding: ID, what's missing, your assessment that aggregate scope warrants re-entering implementation rather than respond-mode patching. Recommend: resume incremental, revise design, or other.
 
 Bar is *aggregate work*, not finding count. One-line additions, single-file omissions clearly within respond's scope → notes file only, no escalation. Err on the side of escalation.
 

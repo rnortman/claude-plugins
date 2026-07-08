@@ -65,7 +65,15 @@ User-supplied instructions for a subagent: relay *verbatim* in addition to the n
 
 If the project has a documentation standard (e.g., ADR dirs), follow that standard. Create a workflow directory.
 
-Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md`, `implementation-log.md` (append-only across all increments and rounds — the implementation record), `notes-<phase>-<reviewer>.md`, `dispositions-<phase>.md`, `judge-verdict-<phase>.md`, `escalation-<phase>.md`. Per-round review files reuse the same `<phase>` names each round (overwritten; the round is squashed once approved). Post-freeze spec revisions: `requirements-delta-<N>.md`, `design-delta-<N>.md`, `design-eli5-delta-<N>.md` (see **freeze**).
+Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md` (the four spec docs — edited in place only while drafted/revised pre-freeze, then frozen), `implementation-log.md` (append-only across all increments and rounds — the implementation record). Post-freeze spec revisions: `requirements-delta-<N>.md`, `design-delta-<N>.md`, `design-eli5-delta-<N>.md` (see **freeze**).
+
+**Review artifacts are the workflow's audit trail — never overwritten** (see **Audit trail** in Principles). Every review round and every rework attempt writes its own durably-numbered file. Two ordinals: **round `R`** (per phase — the review pass for requirements/design, the implementation round for prepass/deep; prepass and deep of the same round share one `R`) and **rework attempt `A`** (1 = initial pass, 2 = the one rework round). `<phase>` ∈ {`requirements`, `design`, `prepass`, `deep`}.
+- Reviewer notes: `notes-<phase>-<reviewer>-r<R>.md` — reviewers run once per round, so no `A`.
+- Dispositions: `dispositions-<phase>-r<R>-a<A>.md`.
+- Judge verdict: `judge-verdict-<phase>-r<R>-a<A>.md` (a judge ESCALATE *is* this file — there is no separate judge escalation doc).
+- Escalation self-written by a responder/reviewer: `escalation-<phase>-scope-r<R>.md`, `escalation-<phase>-respond-r<R>-a<A>.md`.
+
+**Never write to a path that already exists.** If a name would ever collide, advance the ordinal — the only in-place growth permitted is append-only logs.
 
 No-VCS: tell implementer "no-vcs mode"; reviewers "no base — review working tree."
 
@@ -84,18 +92,19 @@ No-VCS: tell implementer "no-vcs mode"; reviewers "no base — review working tr
 
 ### requirements-review
 6. READY-FOR-REVIEW → continue. CLARIFICATION-NEEDED → skip steps 7-10; jump to user gate (refiner's doc is questions; surface as-is).
-7. Spawn `requirements-reviewer`. Pass: request path, exploration path, requirements path, target `notes-requirements-requirements-reviewer.md`.
-8. Spawn `requirements-refiner` mode "respond, round 1". Pass: request path, exploration path, requirements path, working dir, notes path, target `dispositions-requirements.md`.
-9. Spawn `judge` round 1. Pass: notes path, dispositions path, requirements path, working dir, target `judge-verdict-requirements.md`.
-10. REWORK → fresh refiner "respond, rework" + fresh judge "round 2 — APPROVED or ESCALATE only". ESCALATE → surface escalation path alongside requirements at user gate.
+Requirements-review round `R` starts at 1; bump it on each post-gate re-review (step 12).
+7. Spawn `requirements-reviewer`. Pass: request path, exploration path, requirements path, target `notes-requirements-requirements-reviewer-r<R>.md`.
+8. Spawn `requirements-refiner` mode "respond, round 1". Pass: request path, exploration path, requirements path, working dir, notes path, target `dispositions-requirements-r<R>-a1.md`.
+9. Spawn `judge` round 1. Pass: notes path, dispositions path, requirements path, working dir, target `judge-verdict-requirements-r<R>-a1.md`.
+10. REWORK → fresh refiner "respond, rework" (target `dispositions-requirements-r<R>-a2.md`) + fresh judge "round 2 — APPROVED or ESCALATE only" (target `judge-verdict-requirements-r<R>-a2.md`). ESCALATE → surface escalation path alongside requirements at user gate.
 
 ### Gate — user requirements approval
 11. STOP. Surface requirements path (+ escalation path if any) in ≤2 lines, end turn. Judge APPROVED ≠ user approval. Chat note: agent re-review post-user is opt-in.
 12. User feedback forms:
     - **In-place artifact edits** (typical: answers to open questions) → fresh refiner revise pointing at edited requirements + new path. Skip downstream if edits complete and user proceeds.
     - **Separate notes doc** (substantive comments) → use user path.
-    - **Chat directives** (one or two brief instructions) → write to `notes-requirements-user.md` verbatim, numbered if multiple, no elaboration or paraphrasing. Treat as user-notes path.
-    Apply (notes doc or chat-directive file):
+    - **Chat directives** (one or two brief instructions) → write to `notes-requirements-user-r<R>.md` verbatim (multiple directives → numbered entries in that one file), no elaboration or paraphrasing. Treat as user-notes path.
+    Apply (notes doc or chat-directive file) — bump `R` first (this is a new review pass; its dispositions/verdict use the new `R`):
     - Default: fresh refiner respond with user-notes path → fresh judge with user-notes + dispositions + requirements. Loop 11.
     - Opt-in agent re-review (only if user requests): fresh `requirements-reviewer` **with user-notes path so it does not override user** → responder vs combined notes → judge.
 
@@ -103,10 +112,11 @@ No-VCS: tell implementer "no-vcs mode"; reviewers "no base — review working tr
 13. Spawn `designer` mode "draft". Pass: exploration path, requirements path, target design path.
 
 ### design-review
-14. Spawn `design-reviewer`. Pass: design path, requirements path, exploration path, base commit, target `notes-design-design-reviewer.md`.
-15. Spawn `designer` mode "respond, round 1". Pass: design path, requirements path, exploration path, working dir, notes path, target `dispositions-design.md`.
-16. Spawn `judge` round 1. Pass: notes path, dispositions path, design path, working dir, target `judge-verdict-design.md`.
-17. REWORK → fresh designer "respond, rework" + fresh judge "round 2 — APPROVED or ESCALATE only".
+Design-review round `R` starts at 1; bump it on each post-gate re-review (step 20).
+14. Spawn `design-reviewer`. Pass: design path, requirements path, exploration path, base commit, target `notes-design-design-reviewer-r<R>.md`.
+15. Spawn `designer` mode "respond, round 1". Pass: design path, requirements path, exploration path, working dir, notes path, target `dispositions-design-r<R>-a1.md`.
+16. Spawn `judge` round 1. Pass: notes path, dispositions path, design path, working dir, target `judge-verdict-design-r<R>-a1.md`.
+17. REWORK → fresh designer "respond, rework" (target `dispositions-design-r<R>-a2.md`) + fresh judge "round 2 — APPROVED or ESCALATE only" (target `judge-verdict-design-r<R>-a2.md`).
 18. ESCALATE → surface escalation path. After user direction: re-run design (fresh designer revise + fresh review chain) or accept user call.
 
 ### eli5
@@ -117,8 +127,8 @@ Design-review APPROVED → spawn `eli5-explainer`. Pass: design path, requiremen
 20. User feedback forms:
     - **In-place artifact edits** (typical: answers to open questions) → fresh designer revise pointing at edited design + new path. Skip downstream if edits complete and user proceeds.
     - **Separate notes doc** (substantive comments) → use user path.
-    - **Chat directives** (one or two brief instructions) → write to `notes-design-user.md` verbatim, numbered if multiple, no elaboration or paraphrasing. Treat as user-notes path.
-    Apply (notes doc or chat-directive file):
+    - **Chat directives** (one or two brief instructions) → write to `notes-design-user-r<R>.md` verbatim (multiple directives → numbered entries in that one file), no elaboration or paraphrasing. Treat as user-notes path.
+    Apply (notes doc or chat-directive file) — bump `R` first (this is a new review pass; its dispositions/verdict use the new `R`):
     - Default: fresh designer respond with user-notes path → fresh judge with user-notes + dispositions + design → fresh `eli5-explainer` if the design changed. Loop 19.
     - Opt-in agent re-review (only if user requests): fresh design-reviewer **with user-notes path so it does not override user** → responder vs combined notes → judge → fresh `eli5-explainer` if the design changed.
 
@@ -142,7 +152,7 @@ A requirements or design change needed after freeze? Never touch the frozen doc.
 
 ### implement (incremental rounds)
 
-Log path: `implementation-log.md` (append-only across all rounds). Track a **round base** (starts = original base) and an **increment counter** (starts 0; reset to 0 at the start of each round). Step 24 applies throughout.
+Log path: `implementation-log.md` (append-only across all rounds). Track a **round base** (starts = original base), an **increment counter** (starts 0; reset to 0 at the start of each round), and a **round number `R`** (starts 1; increment at the start of each new round — see step 36). Step 24 applies throughout.
 
 21. Spawn fresh `implementer` mode "incremental". Pass: design path (+ any delta paths), requirements path, working dir, log path, round base, current HEAD.
     - **End every incremental spawn prompt with this line, verbatim, as the last thing in the prompt** (recency reinforcement against the orient-before-deciding instinct; an exception to "no rubric restating"): `First two tool calls: parallel Read of input docs, then single Edit appending draft scope to log. No source reads, Grep, ls, or Bash before the log Edit.`
@@ -157,26 +167,26 @@ A review round reviews `round base..HEAD` — only the current round's commits (
 
 ### pre-pass review
 25. **One assistant message, both `Agent` calls in parallel:**
-    - `slop-reviewer`: round base, HEAD, target `notes-prepass-slop.md`.
-    - `scope-reviewer`: round base, HEAD, design path (+ delta paths), log path, **round type (intermediate | final)**, target `notes-prepass-scope.md`. Intermediate round → it checks this round's log-claimed slice; final round → it also checks the whole design is accounted for in the full log. Either way it also checks every log claim traces to the effective design (design + deltas).
+    - `slop-reviewer`: round base, HEAD, target `notes-prepass-slop-r<R>.md`.
+    - `scope-reviewer`: round base, HEAD, design path (+ delta paths), log path, **round type (intermediate | final)**, target `notes-prepass-scope-r<R>.md`, escalation target `escalation-prepass-scope-r<R>.md`. Intermediate round → it checks this round's log-claimed slice; final round → it also checks the whole design is accounted for in the full log. Either way it also checks every log claim traces to the effective design (design + deltas).
     - Scope-reviewer reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't spawn the responder. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
-26. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, both notes paths, target `dispositions-prepass.md`.
+26. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, both notes paths, target `dispositions-prepass-r<R>-a1.md`, escalation target `escalation-prepass-respond-r<R>-a1.md`.
     - Implementer reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't proceed to judge or deep review. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
-27. Spawn `judge` round 1. Pass: both notes paths, dispositions path, working dir, round base, HEAD, design path, target `judge-verdict-prepass.md`.
-28. REWORK → fresh implementer respond rework + fresh judge round 2.
+27. Spawn `judge` round 1. Pass: both notes paths, dispositions path, working dir, round base, HEAD, design path, target `judge-verdict-prepass-r<R>-a1.md`.
+28. REWORK → fresh implementer respond rework (target `dispositions-prepass-r<R>-a2.md`, escalation target `escalation-prepass-respond-r<R>-a2.md`) + fresh judge round 2 (target `judge-verdict-prepass-r<R>-a2.md`).
 29. APPROVED → deep. ESCALATE → surface.
 
 ### deep review
-30. **One assistant message, all 7 `Agent` calls in parallel:** `error-handling-reviewer`, `correctness-reviewer`, `security-reviewer`, `test-reviewer`, `reuse-reviewer`, `quality-reviewer`, `efficiency-reviewer`. Each: round base, HEAD, design path, target `notes-deep-<reviewer>.md`.
-31. Spawn `implementer` respond round 1. Pass: design path, working dir, round base, HEAD, all 7 notes paths, target `dispositions-deep.md`.
-32. Spawn `judge` round 1. Pass: 7 notes paths, dispositions path, working dir, round base, HEAD, design path, target `judge-verdict-deep.md`.
-33. REWORK → fresh implementer rework + fresh judge round 2.
+30. **One assistant message, all 7 `Agent` calls in parallel:** `error-handling-reviewer`, `correctness-reviewer`, `security-reviewer`, `test-reviewer`, `reuse-reviewer`, `quality-reviewer`, `efficiency-reviewer`. Each: round base, HEAD, design path, target `notes-deep-<reviewer>-r<R>.md`.
+31. Spawn `implementer` respond round 1. Pass: design path, working dir, round base, HEAD, all 7 notes paths, target `dispositions-deep-r<R>-a1.md`, escalation target `escalation-deep-respond-r<R>-a1.md`.
+32. Spawn `judge` round 1. Pass: 7 notes paths, dispositions path, working dir, round base, HEAD, design path, target `judge-verdict-deep-r<R>-a1.md`.
+33. REWORK → fresh implementer rework (target `dispositions-deep-r<R>-a2.md`, escalation target `escalation-deep-respond-r<R>-a2.md`) + fresh judge round 2 (target `judge-verdict-deep-r<R>-a2.md`).
 34. APPROVED → a **final round** goes to ship-gate; an **intermediate round** goes to intermediate squash. ESCALATE → surface.
 
 ### intermediate squash (between rounds — no user gate)
 After an intermediate round (5-cap, implementer still `in progress`) reaches deep-review APPROVED:
 35. Squash `round base..HEAD` into one commit with a clean conventional message (mechanical git: `git reset --soft <round base>` then commit). This is an internal checkpoint, not a ship — **no user gate**, no push.
-36. Re-verify the frozen set is byte-unchanged against `freeze` (a squash must not alter frozen files). Set **round base** = the new squash commit, reset the increment counter to 0, loop to step 21 for the next round.
+36. Re-verify the frozen set is byte-unchanged against `freeze` (a squash must not alter frozen files). Set **round base** = the new squash commit, reset the increment counter to 0, **increment `R`**, loop to step 21 for the next round.
 
 No-VCS working dir has no commits to squash: run each round's review on the working tree and skip the squash; carry on to the next round.
 
@@ -185,7 +195,7 @@ No-VCS working dir has no commits to squash: run each round's review on the work
 38. User approves squash → you squash to the **original base** with a clean message (mechanical git), folding every round + the freeze commit into one commit.
 39. Push: separate, explicit user authorization for named repo + branch. "Approved squash" ≠ "approve push".
 
-Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user.md` verbatim, numbered if multiple): if the revision changes the design or requirements (not just code), first capture it as a delta doc (fresh designer → `design-delta-<N>.md` / fresh refiner → `requirements-delta-<N>.md`; frozen docs never edited) before the implementer; code-only changes go straight to the implementer. Then: fresh implementer respond + commit → re-check the frozen set → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path + delta paths to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
+Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user-<K>.md` verbatim, `K` = 1, 2, … per revision batch — never reuse a prior file): if the revision changes the design or requirements (not just code), first capture it as a delta doc (fresh designer → `design-delta-<N>.md` / fresh refiner → `requirements-delta-<N>.md`; frozen docs never edited) before the implementer; code-only changes go straight to the implementer. Each revision cycle bumps `R` (a new review pass — its dispositions/verdict/notes use the new `R`). Then: fresh implementer respond + commit → re-check the frozen set → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path + delta paths to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
 
 ### todo burndown (alternate entry)
 
@@ -229,6 +239,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 
 - No artifact reads/writes by you.
 - All structured content in docs. Reply bodies = paths/hashes only.
+- **Audit trail — overwrite nothing.** Workflow artifacts are the audit trail of the workflow itself. They are *not* ground truth for the current state of the code — the code is that — but they are **100% ground truth for what the workflow did and what happened at each step**: every review round, every finding, every disposition, every judge verdict. Because they are an audit trail, review artifacts are **never overwritten**: every review round and every rework attempt writes its own durably-numbered file (see **Working dir** for the `r<R>`/`a<A>` scheme). The only permitted in-place growth is explicitly append-only logs (which only grow, never lose prior content); the four spec docs are edited in place only while drafted pre-freeze, then frozen. Never write to a path that already exists — advance the ordinal instead.
 - Never pass `model` (inherit / agent-pinned). Sole exception: user-requested Opus on the implementer.
 - All agents one-shot.
 - Implementation is incremental only — there is no single-shot mode. Increments run in rounds of up to 5; a review round fires at the 5th increment or when the implementer replies `done`.
@@ -251,6 +262,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Edit a frozen artifact post-freeze, or let any agent do so. Revisions go in new `*-delta-<N>.md` docs. A modified frozen doc halts the workflow until restored.
 - Restate rubrics in prompts.
 - Override judge ESCALATE.
+- Overwrite a review artifact or reuse a review-artifact filename across rounds or rework attempts. Every notes/dispositions/verdict/escalation file is numbered (`r<R>`, `a<A>`); if a name would collide, advance the ordinal. Overwrite nothing but append-only logs.
 - Ship-squash (final round, to the original base) or push without explicit user approval (separately). Intermediate-round squashes are automatic and need no approval.
 - Route a `done` round anywhere but the human ship-gate, or send an intermediate round to a user gate.
 - Force-push, any context.

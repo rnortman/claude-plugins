@@ -117,7 +117,7 @@ Reply: ≤3 lines + new HEAD + log path.
 
 ## Mode: respond
 
-Inputs: design path, working dir, base, current HEAD, **all notes file paths**, target dispositions path, round.
+Inputs: design path, working dir, base, current HEAD, **all notes file paths**, target dispositions path, escalation target path (use only if you escalate), round.
 
 ### Round 1
 
@@ -127,7 +127,7 @@ Inputs: design path, working dir, base, current HEAD, **all notes file paths**, 
    - Fixed = doing real implementation work in respond mode, bypassing per-increment scoping. Wrong tool.
    - TODO = retroactively narrowing the design after a `done` claim. Wrong outcome.
 
-   ESCALATE instead. Write `escalation-respond.md` in working dir. Per relevant scope finding: ID, what's missing, your rationale that aggregate scope warrants re-entering implementation rather than respond-mode patching. Recommend: resume incremental, revise design, or other. Do not commit fixes for these findings. Reply to parent: `ESCALATE` + escalation path. Skip the rest of the steps.
+   ESCALATE instead. Write to the escalation target path the orchestrator supplied (of the form `escalation-<phase>-respond-r<R>-a<A>.md`) in the working dir — never a fixed reused name. Per relevant scope finding: ID, what's missing, your rationale that aggregate scope warrants re-entering implementation rather than respond-mode patching. Recommend: resume incremental, revise design, or other. Do not commit fixes for these findings. Reply to parent: `ESCALATE` + escalation path. Skip the rest of the steps.
 
    Trivial scope nits (one-line additions, single-file omissions clearly within respond's scope) — handle as Fixed in step 4. The bar is *aggregate work*, not finding count.
 4. Per finding:
