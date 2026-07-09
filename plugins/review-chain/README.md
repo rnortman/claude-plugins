@@ -69,7 +69,7 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
 
 ### Hooks
 
-- **intercept-explore** (`PreToolUse`) — The built-in `Explore` agent runs on Haiku, which is too weak for this workflow's exploration; the orchestrator is meant to use the `review-chain:explorer` agent (Sonnet) but reflexively reaches for `Explore` anyway. This hook intercepts every `Explore` spawn and, by default, **silently upgrades it to Sonnet**. Every other tool call and every other agent passes through untouched.
+- **intercept-explore** (`PreToolUse`) — The built-in `Explore` agent runs on Haiku, which is too weak for this workflow's exploration; the orchestrator is meant to use the `review-chain:explorer` agent (Opus) but reflexively reaches for `Explore` anyway. This hook intercepts every `Explore` spawn and, by default, **silently upgrades it to Sonnet**. Every other tool call and every other agent passes through untouched.
 
   The hook is active in any project while `review-chain` is enabled. Claude Code has no native per-plugin hook toggle, so behavior is controlled by a single environment variable, `REVIEW_CHAIN_EXPLORE_HOOK`:
 

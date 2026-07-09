@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.12.0 — 2026-07-08
+
+Re-pin the explorer and eli5-explainer for the opus-low ≈ sonnet-high cost/performance tradeoff (Opus at low effort is roughly the cost of Sonnet at high effort, with better results).
+
+- **explorer**: moved from `model: sonnet` to `model: claude-opus-4-8[1M]` with `effort: low`. This is the first use of the `effort` frontmatter field on a review-chain agent; effort pins apply when the agent is active, overriding the session effort level but not the `CLAUDE_CODE_EFFORT_LEVEL` env var. (Note: `effort` can only be pinned in agent frontmatter — unlike `model`, there is no per-spawn effort parameter, so the `model-override` hook / `.conf` file cannot re-pin it locally.)
+- **eli5-explainer**: added `effort: low` (model unchanged, `claude-opus-4-6[1M]`).
+- **CLAUDE.md**, **README**: the explorer is now described as "Pinned to Opus at low effort"; the intercept-explore blurb's parenthetical for the `review-chain:explorer` agent now reads "(Opus)". The `Explore`-hook default upgrade target (Sonnet) is a separate mechanism and is unchanged.
+
 ### 0.11.0 — 2026-07-07
 
 Stop overwriting review artifacts: they are the workflow's audit trail, so every review round and rework attempt now writes its own numbered file instead of clobbering the last.
