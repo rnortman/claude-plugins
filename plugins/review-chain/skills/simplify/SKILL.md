@@ -7,23 +7,19 @@ Review changed files + fix issues. User-facing convenience for ad-hoc review out
 
 ## Phase 0: Working dir
 
-Create `.claude/work/simplify/`. Use for the three notes files.
+Create `.claude/work/simplify/`. Use for the notes file.
 
-## Phase 1: Parallel reviewers
+## Phase 1: Review
 
-Single message, three Agent calls in parallel. Each agent finds changed code itself — don't `git diff` yourself, don't pass the diff.
+Spawn `citizen-reviewer` — long-term-owner review across quality (hacky patterns, complexity, observability gaps, workarounds), reuse (duplicated functionality), and efficiency (performance, wasteful patterns). The agent finds changed code itself — don't `git diff` yourself, don't pass the diff.
 
-1. `reuse-reviewer` — duplicated functionality. Target: `.claude/work/simplify/reuse-notes.md`.
-2. `quality-reviewer` — hacky patterns, complexity, observability gaps, workarounds. Target: `.claude/work/simplify/quality-notes.md`.
-3. `efficiency-reviewer` — performance, wasteful patterns. Target: `.claude/work/simplify/efficiency-notes.md`.
+Prompt: "Review current changes. Target notes: `.claude/work/simplify/citizen-notes.md`. Write to file. Reply path only."
 
-Prompt for each: "Review current changes. Target notes: `<path>`. Write to file. Reply path only."
-
-Rubrics baked in.
+Rubric baked in.
 
 ## Phase 2: Fix
 
-Wait for all three. Read the notes files at returned paths. Fix each finding directly. False positive or not worth addressing → skip; don't argue.
+Read the notes file at the returned path. Fix each finding directly. False positive or not worth addressing → skip; don't argue.
 
 ## Phase 3: TODOs for out-of-scope
 

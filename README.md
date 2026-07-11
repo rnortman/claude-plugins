@@ -14,7 +14,7 @@ There's some [anecdotal usage data](docs/usage-analysis/README.md) gathered usin
 
 ## Plugins
 
-- **[review-chain](plugins/review-chain/)** — Orchestrator-driven workflow with adversarial review chains. Specialist reviewers (slop, scope, security, correctness, error-handling, tests, reuse, quality, efficiency) run in parallel against each commit; a responder fact-checks every finding; a judge adjudicates. Requirements and design each get an adversarial review with the same review → respond → adjudicate pattern before the corresponding user gate. All agents are one-shot, file-based, and token-frugal — the orchestrator consumes only short summaries and paths.
+- **[review-chain](plugins/review-chain/)** — Orchestrator-driven workflow with adversarial review chains. A thin pre-pass reviewer (slop + scope) gates a deep pass that runs in sequential waves — citizen (quality, reuse, efficiency), then tracer (correctness, error handling, security) + test over the code including the first wave's fixes; a responder fact-checks and fixes after every wave; a judge adjudicates dispositions and scans the fixes no reviewer saw. Requirements and design each get an adversarial review with the same review → respond → adjudicate pattern before the corresponding user gate. All agents are one-shot, file-based, and token-frugal — the orchestrator consumes only short summaries and paths.
 - **[setup-project](plugins/setup-project/)** — Optional bootstrap that wires the orchestrator as the default agent, adds a generic Working-With-Claude-Code section to `CLAUDE.md`, and installs a `TODO.md` + `TODO(slug)` tracking convention. Take it or leave it — `review-chain` works without it.
 
 ## How review-chain works
@@ -29,9 +29,13 @@ flowchart TD
     rrev -. user gate .-> d[designer drafts]
     d --> dr[[Design Review<br/>design-reviewer]]
     dr -. user gate .-> impl[implementer commits]
-    impl --> pp[[Pre-pass Review<br/>slop + scope · parallel]]
-    pp --> dp[[Deep Review<br/>7 specialists · parallel<br/>error-handling, correctness, security,<br/>test, reuse, quality, efficiency]]
-    dp -. user gate .-> sq[squash to base]
+    impl --> pp[[Pre-pass Review<br/>prepass-reviewer: slop + scope]]
+    pp --> w1[[Deep Wave 1<br/>citizen: quality, reuse, efficiency]]
+    w1 --> fix1[implementer fixes]
+    fix1 --> w2[[Deep Wave 2 · parallel<br/>tracer: correctness, error handling, security<br/>test: presence + quality]]
+    w2 --> fix2[implementer fixes]
+    fix2 --> dj{judge}
+    dj -. user gate .-> sq[squash to base]
     sq -. user gate .-> push([push])
 ```
 
@@ -50,9 +54,9 @@ flowchart LR
     J2 -- ESCALATE --> esc([surface to user])
 ```
 
-Reviewers (one-shot, fresh each phase) write notes files in parallel; the responder reads all notes and marks each finding **Fixed**, **TODO(slug)**, or **Won't-Do**; the judge reads the notes, the dispositions, and the diff (or the design / refined request) and decides APPROVED / REWORK / ESCALATE based on the consequence text in each finding. One rework round max per phase — round 2 returns either APPROVED or ESCALATE. Reviewers can also ESCALATE directly mid-phase (e.g., scope-reviewer flagging a bait-and-switch) without going through the judge.
+Reviewers (one-shot, fresh each phase) write notes files; the responder reads the notes and marks each finding **Fixed**, **TODO(slug)** (self-scoring the judge's TODO rubric), or **Won't-Do**; the judge reads the notes, the dispositions, and the diff (or the design / refined request), scans any respond commits no reviewer saw, and decides APPROVED / REWORK / ESCALATE based on the consequence text in each finding. One rework round max per phase — round 2 returns either APPROVED or ESCALATE. Reviewers can also ESCALATE directly mid-phase (e.g., the prepass-reviewer flagging a bait-and-switch on scope) without going through the judge.
 
-Implementer mode also has an opt-in **incremental** loop that emits multiple commits before pre-pass, useful for larger changes; reviews still run once at the end against the cumulative diff.
+The deep pass is sequential on purpose: the citizen wave's structural findings get fixed before the tracer's adversarial bug-hunt reads the code, so the deepest review runs on near-final code and each wave's fixes are reviewed by the next wave (the judge covers the last one). Implementation itself is incremental — rounds of up to 5 commits, each round reviewed over just its own commits and silently squashed, with only the final `done` round reaching the human ship-gate.
 
 For the morbidly curious — the whole thing fully expanded, every loop and every ESCALATE edge inline:
 
@@ -84,36 +88,24 @@ flowchart LR
 
     dGate[/user gate/] --> impl[implementer commits]
 
-    impl --> slop[slop-reviewer]
-    impl --> scope[scope-reviewer]
-    scope -. mid-phase ESCALATE .-> esc
-    slop --> pResp[implementer responds]
-    scope --> pResp
+    impl --> pre[prepass-reviewer<br/>slop + scope]
+    pre -. mid-phase ESCALATE .-> esc
+    pre --> pResp[implementer responds]
     pResp --> pJ{judge}
     pJ -. REWORK .-> pResp2[fresh implementer]
     pResp2 --> pJ2{fresh judge}
-    pJ -- APPROVED --> deepFan
-    pJ2 -- APPROVED --> deepFan
+    pJ -- APPROVED --> ci
+    pJ2 -- APPROVED --> ci
     pJ -- ESCALATE --> esc
     pJ2 -- ESCALATE --> esc
 
-    deepFan(( )) --> eh[error-handling]
-    deepFan --> co[correctness]
-    deepFan --> se[security]
-    deepFan --> te[test]
-    deepFan --> re[reuse]
-    deepFan --> qu[quality]
-    deepFan --> ef[efficiency]
+    ci[citizen-reviewer<br/>quality, reuse, efficiency] --> w1Resp[implementer responds + fixes]
+    w1Resp --> tr[tracer-reviewer<br/>correctness, error handling, security]
+    w1Resp --> te[test-reviewer]
+    tr --> w2Resp[implementer responds + fixes]
+    te --> w2Resp
 
-    eh --> dpResp[implementer responds]
-    co --> dpResp
-    se --> dpResp
-    te --> dpResp
-    re --> dpResp
-    qu --> dpResp
-    ef --> dpResp
-
-    dpResp --> dpJ{judge}
+    w2Resp --> dpJ{judge<br/>both waves + respond-commit scan}
     dpJ -. REWORK .-> dpResp2[fresh implementer]
     dpResp2 --> dpJ2{fresh judge}
     dpJ -- APPROVED --> shipGate

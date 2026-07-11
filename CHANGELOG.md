@@ -4,6 +4,26 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.13.0 — 2026-07-10
+
+Restructure the review architecture: consolidate ten reviewers into five grouped by reading mode, run the deep pass as sequential waves with fixes between them, and make the judge scan the fixes no reviewer saw. Finding IDs become meaningful slugs. Wall-clock time was deliberately traded away for token efficiency and outcome quality.
+
+- **Reviewer consolidation (10 → 5).** Reviewers are now grouped by *reading mode*, not fine-grained topic — the attention-diffusion risk comes from mixing kinds of reading, not from rubric breadth:
+  - **prepass-reviewer** (new, Sonnet) = slop-reviewer + scope-reviewer. Same two thin lanes (slop: diff-only LLM tells and face-of-diff problems; scope: log-vs-diff completeness + design-authorization, round-aware, with direct ESCALATE authority), one spawn.
+  - **citizen-reviewer** (new, Opus) = quality-reviewer + reuse-reviewer + efficiency-reviewer. One long-term-owner reading: compare the diff against the codebase it has to live in.
+  - **tracer-reviewer** (new, Opus) = correctness-reviewer + error-handling-reviewer + security-reviewer. One adversarial reading: trace the code, try to break it.
+  - **test-reviewer** stays its own agent (it reads a different artifact) and moves from Sonnet to Opus.
+  - Deleted: slop-, scope-, correctness-, security-, error-handling-, quality-, reuse-, efficiency-reviewer.
+- **Deep review runs as two sequential waves with implementer fixes between them** (replacing the 7-way parallel fan): wave 1 `citizen-reviewer` → implementer responds/fixes → wave 2 `tracer-reviewer` + `test-reviewer` in parallel over the cumulative round diff (wave-1 fixes included — which is how wave-1's fixes get reviewed) → implementer responds/fixes → judge. Structural findings get fixed before the deep bug-hunt reads the code, duplicate findings across reviewers largely disappear, and waves stay blind to each other's notes (independent sampling beats iteration for diversity). Each wave writes its own dispositions doc: `dispositions-deep-r<R>-w<W>-a1.md`; the rework doc spans waves (`dispositions-deep-r<R>-a2.md`). Deep notes files: `notes-deep-{citizen,tracer,test}-r<R>.md`; prepass artifacts simplify to `notes-prepass-r<R>.md` / `escalation-prepass-r<R>.md`.
+- **Judge: respond-commit regression scan.** The orchestrator now passes the deep judge the **reviewed HEAD** (the commit wave 2 saw); the judge scans `reviewed HEAD..HEAD` — the respond commits no reviewer reviewed — checking each fix holds on all paths and hunting for new breakage. Problems found there are disputed items like any other. New verdict-file section between the findings walk and disputed items; verdict header stays last.
+- **TODO dispositions must self-score the judge's rubric.** The implementer's respond mode now requires every TODO(slug) disposition to answer the judge's two acceptability questions (worth doing? requires design/owner input first?) inline, with the warning that the judge re-scores and a Q2 failure gets bounced to do-it-now. Puts the anti-TODO-explosion bar in front of the agent tempted to punt, not just the one that catches it.
+- **Finding IDs are slugs, not numbers**: `<category>-<short-kebab-slug>` (e.g. `security-toctou-user-record-update`) instead of `security-1`. IDs get quoted in commit messages and chat; the slug carries the meaning. Categories are the old lane vocabulary (`slop`, `scope`, `correctness`, `errhandling`, `security`, `test`, `quality`, `reuse`, `efficiency`, `requirements`, `design`, `code`) and map to lanes, not agents.
+- **Lanes are not blinders.** Every reviewer now carries an "Out of lane" section replacing the old "Not your lane" referrals: work your own rubric first, but report a real problem you trip over outside it under whichever category fits, rather than staying silent because another specialist owns it.
+- **Removed the orchestrator skill** (`skills/orchestrator/`) — it was a hand-maintained near-copy of the orchestrator agent and had already drifted (missing todo-burndown, SendMessage, parallel-spawn mechanics; disagreed on working-dir selection). The agent is the single source of truth.
+- **/simplify** now spawns the single citizen-reviewer instead of three parallel reviewers.
+- **implementer**: fixed duplicate step numbering in incremental mode; respond-mode inputs clarified for per-wave notes.
+- **CLAUDE.md**, **READMEs**: rewritten for the new roster, wave flow, slug IDs, and artifact naming (round `r<R>` / wave `w<W>` / attempt `a<A>`).
+
 ### 0.12.0 — 2026-07-08
 
 Re-pin the explorer and eli5-explainer for the opus-low ≈ sonnet-high cost/performance tradeoff (Opus at low effort is roughly the cost of Sonnet at high effort, with better results).

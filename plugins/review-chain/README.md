@@ -28,9 +28,9 @@ The result is a workflow you can actually follow on a ten-finding review without
 
 ### Review specialists
 
-Each has a focused rubric baked into its agent definition. Orchestrator spawns the relevant specialists in parallel, collects findings paths, then spawns the responder and judge.
+Each has focused rubrics baked into its agent definition — the focus areas sharpen attention, but they are not blinders: a reviewer that trips over a real problem outside its lanes reports it under whichever category fits.
 
-Findings are numbered with a per-reviewer prefix (`security-1`, `correctness-3`, etc.). Each finding includes file:line, what's wrong, why, and a **consequence** statement. Reviewers do not assign severity tags — severity is judged downstream from the consequence.
+Finding IDs are slugs with a category prefix (`security-toctou-user-record-update`, `reuse-reimplements-retry-helper`). Each finding includes file:line, what's wrong, why, and a **consequence** statement. Reviewers do not assign severity tags — severity is judged downstream from the consequence.
 
 **Pre-design:**
 - **requirements-reviewer** — Adversarial fact-check of the refined request against the original request and exploration.
@@ -38,33 +38,29 @@ Findings are numbered with a per-reviewer prefix (`security-1`, `correctness-3`,
 **Pre-implementation:**
 - **design-reviewer** — Adversarial fact-check of the design doc against the refined request.
 
-**Post-implementation thin pre-pass** (parallel, diff-only):
-- **slop-reviewer** — LLM writing tells, obvious unhandled cases, workarounds for existing bugs visible on the face of the diff.
-- **scope-reviewer** — Did this round deliver what its implementation-log entries claim (and, on the final `done` round, is the whole design implemented)? Does everything the log claims actually trace to the design or a design delta? Are punts explicit and justified? Round-aware.
+**Post-implementation thin pre-pass:**
+- **prepass-reviewer** — Two thin lanes in one pass. Slop (diff only): LLM writing tells, obvious unhandled cases, workarounds visible on the face of the diff. Scope (diff + design + implementation log): did this round deliver what its log entries claim (and, on the final `done` round, is the whole design implemented), does every log claim trace to the design or a delta, are punts explicit and justified? Round-aware; can ESCALATE directly on aggregate missing scope.
 
-**Post-implementation deep pass** (parallel, may read surrounding code):
-- **error-handling-reviewer** — Exhaustive handling, reporting-and-response for unexpected situations.
-- **correctness-reviewer** — Logic bugs, off-by-ones, races, leaks.
-- **security-reviewer** — Trust boundaries, injection, secrets, auth/authz.
-- **test-reviewer** — Test presence and quality.
-- **reuse-reviewer** — Duplication with existing code.
-- **quality-reviewer** — Hacky patterns, unnecessary complexity, observability gaps, workarounds for existing bugs that need context to see.
-- **efficiency-reviewer** — Performance, missed concurrency, wasteful patterns.
+**Post-implementation deep pass** (two sequential waves; each may read surrounding code):
+- **citizen-reviewer** (wave 1) — Long-term-owner lens: quality (hacky patterns, complexity, observability gaps, workarounds), reuse (duplication with existing code), efficiency (performance, missed concurrency, wasteful patterns).
+- **tracer-reviewer** (wave 2) — Adversarial code tracing: correctness (logic bugs, off-by-ones, races, leaks), error handling (exhaustive handling, reporting-and-response), security (trust boundaries, injection, secrets, auth/authz).
+- **test-reviewer** (wave 2) — Test presence and quality.
+
+The implementer responds to (and fixes) each wave before the next runs, so wave 2 reviews wave 1's fixes as part of the cumulative diff. Structural findings land first; the deepest bug-hunt runs against near-final code.
 
 **Opt-in (not part of standard workflow):**
 - **code-reviewer** — Generalist broad sweep. Spawn when the user wants one pair of eyes looking at everything.
 
 ### Adjudicator
 
-- **judge** — Spawned fresh per review phase. Reads all notes files + the responder's dispositions doc + the diff (or the design / refined request), assesses severity from the consequence text, decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
+- **judge** — Spawned fresh per review phase. Reads all notes files + the responder's dispositions doc(s) + the diff (or the design / refined request), assesses severity from the consequence text, applies the TODO-acceptability rubric to every added TODO, scans the respond commits no reviewer saw for unfinished fixes and new breakage, and decides APPROVED / REWORK / ESCALATE. One rework round max per phase, then either APPROVED or ESCALATE.
 
-The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention, or Open-Questions entry in the refined request), or **Won't-Do** (requires written rationale arguing the change would actively harm the artifact).
+The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixed**, **TODO(slug)** (defer with a slug; TODO comment per project convention, or Open-Questions entry in the refined request — the disposition must self-score the judge's two-question TODO rubric), or **Won't-Do** (requires written rationale arguing the change would actively harm the artifact).
 
 ### Skills
 
-- **/simplify** — User-facing convenience for ad-hoc review outside the full workflow. Runs quality, reuse, and efficiency reviewers in parallel against the current diff and applies the fixes.
+- **/simplify** — User-facing convenience for ad-hoc review outside the full workflow. Runs the citizen-reviewer (quality + reuse + efficiency) against the current diff and applies the fixes.
 - **/cleanup-editor** — Invoked by the designer (and available to any author) to self-clean a draft for clarity, contradictions, and answerable open questions.
-- **/orchestrator** (skill version of the orchestrator agent) — Lets you trigger the orchestrator's workflow as a skill from any agent.
 - **/configure-models** — Generates (and optionally edits) the local `review-chain-models.conf` consumed by the `model-override` hook, so you can re-pin any agent's model per-project or per-user without editing agent files or publishing. Wraps the deterministic template generator bundled in the skill.
 
 ### Hooks
@@ -104,12 +100,18 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
 explore → requirements → requirements-review → [user gate]
        → design → design-review → [user gate]
        → implement (incremental rounds of ≤5 increments)
-           → per-round review: pre-pass (slop + scope) → deep review (7 specialists), over that round's commits only
+           → per-round review, over that round's commits only:
+               pre-pass (prepass-reviewer: slop + scope) → respond → judge
+               → deep wave 1 (citizen) → respond/fix
+               → deep wave 2 (tracer + test, cumulative diff incl. wave-1 fixes) → respond/fix
+               → judge (both waves' dispositions + scan of unreviewed respond commits)
            → intermediate round (hit 5, still going): silent squash, NO user gate → the squash is the next round's base → repeat
            → final round (implementer replied "done"): → ship-gate (squash to the original base + push, separate user gates)
 ```
 
-Each review phase: parallel reviewers → responder (with all notes paths) → judge. REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE. Escalations surface as a doc the user arbitrates. Requirements-review and design-review each run with a single reviewer; the same chain shape applies.
+Each review chain ends at the judge; REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE. Escalations surface as a doc the user arbitrates. Requirements-review and design-review each run with a single reviewer; the same reviewer → responder → judge shape applies.
+
+The deep pass runs sequential waves rather than one parallel fan: structural findings (citizen) get fixed before the adversarial bug-hunt (tracer) reads the code, so the deepest review happens on near-final code, duplicate findings across reviewers mostly disappear, and each wave's fixes are reviewed by the next wave — with the judge scanning whatever the last respond left unreviewed.
 
 Implementation is incremental only. Increments run in rounds; every round is reviewed by the full pre-pass + deep chain over just that round's commits. Intermediate rounds that pass are squashed automatically (no gate) so the next round starts from a clean base; only the final round — the one where the implementer declared the whole design `done` — surfaces to you at the ship-gate.
 

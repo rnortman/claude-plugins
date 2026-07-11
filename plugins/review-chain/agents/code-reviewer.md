@@ -30,7 +30,7 @@ A specialist would fit better → mention in your report.
 
 Path provided (or pick in working dir if not).
 
-Prefix `code`. Number `code-1`, ...
+Finding IDs are slugs: `code-<short-kebab-slug>`, e.g. `code-unvalidated-webhook-payload`. The slug says what the finding *is* — IDs get quoted in chat, so make it carry the meaning on its own.
 
 Per finding:
 - ID.

@@ -7,8 +7,8 @@
     {
       "name": "review-chain",
       "source": "./plugins/review-chain",
-      "version": "0.12.0",
-      "description": "Adversarial review-chain workflow: orchestrator + specialist reviewers + judge, file-based artifacts, one-shot agents."
+      "version": "0.13.0",
+      "description": "Adversarial review-chain workflow: orchestrator + specialist reviewers in sequential waves + judge, file-based artifacts, one-shot agents."
     },
     {
       "name": "setup-project",

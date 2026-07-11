@@ -36,7 +36,7 @@ The refiner's job: turn the user's brief request into a clearer, plainer version
 
 ## Findings file
 
-Prefix `requirements`. Number `requirements-1`, `requirements-2`, ...
+Finding IDs are slugs: `requirements-<short-kebab-slug>`, e.g. `requirements-design-dictation-module-layout`, `requirements-dropped-cli-flag-intent`. The slug says what the finding *is* — IDs get quoted in chat and dispositions, so make it carry the meaning on its own.
 
 Per finding:
 - ID.

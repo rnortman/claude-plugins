@@ -30,7 +30,7 @@ One-shot. Single pass.
 
 ## Findings file
 
-Prefix `design`. Number `design-1`, `design-2`, ...
+Finding IDs are slugs: `design-<short-kebab-slug>`, e.g. `design-invented-config-loader-api`, `design-acceptance-criterion-3-uncovered`. The slug says what the finding *is* — IDs get quoted in chat and dispositions, so make it carry the meaning on its own.
 
 Per finding:
 - ID.

@@ -77,7 +77,7 @@ No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: 
 6. **Replace** the draft scope in the log with what actually shipped. File:line refs; flat bullet list. Note deviations, TODOs, surprises inline. **No "Remaining" / "Next" / "Future work" / "TODO for next increment" sections** — design + log imply what's left. See example below.
 7. Commit with `--no-verify` unless final increment. Final increment must pass pre-commit checks.
 8. Determine if `done` or `in progress`: See `done` rubric below — apply before replying.
-8. Reply: `done` or `in progress` + new HEAD + log path.
+9. Reply: `done` or `in progress` + new HEAD + log path.
 
 ### Example log entry
 
@@ -117,13 +117,13 @@ Reply: ≤3 lines + new HEAD + log path.
 
 ## Mode: respond
 
-Inputs: design path, working dir, base, current HEAD, **all notes file paths**, target dispositions path, escalation target path (use only if you escalate), round.
+Inputs: design path, working dir, base, current HEAD, **the notes file paths for this pass** (deep review runs in waves — you respond to one wave's notes; a later fresh spawn handles the next wave), target dispositions path, escalation target path (use only if you escalate), round.
 
 ### Round 1
 
-1. Read all notes files. Findings prefixed (e.g. `slop-1`, `correctness-2`).
+1. Read all notes files. Finding IDs are slugs, `<category>-<short-kebab-slug>` (e.g. `slop-changelog-comment-flush`, `correctness-off-by-one-batch-window`).
 2. Fact-check each against source — design, code, build/test output. Reviewers hallucinate; don't rubber-stamp.
-3. **Scope-aggregate triage first.** Before per-finding work, look at all `scope-N` findings together. If they name design-mandated work that constitutes *significant net new implementation* — multiple missing pieces, or one substantial piece — neither Fixed nor TODO is appropriate:
+3. **Scope-aggregate triage first.** Before per-finding work, look at all `scope-*` findings together. If they name design-mandated work that constitutes *significant net new implementation* — multiple missing pieces, or one substantial piece — neither Fixed nor TODO is appropriate:
    - Fixed = doing real implementation work in respond mode, bypassing per-increment scoping. Wrong tool.
    - TODO = retroactively narrowing the design after a `done` claim. Wrong outcome.
 
@@ -132,7 +132,7 @@ Inputs: design path, working dir, base, current HEAD, **all notes file paths**, 
    Trivial scope nits (one-line additions, single-file omissions clearly within respond's scope) — handle as Fixed in step 4. The bar is *aggregate work*, not finding count.
 4. Per finding:
    - **Fixed** — apply in code, run relevant tests/build. Note file:line.
-   - **TODO(slug)** — defer when right. Add a TODO comment per project convention. Note where.
+   - **TODO(slug)** — defer ONLY when the judge's rubric genuinely holds. The judge scores every TODO on two questions, and so must you, in the disposition: **Q1 — worth doing, now or eventually?** **Q2 — requires a design cycle or human review/input before doing?** A TODO that fails Q2 — doable now without further input — will be bounced to do-it-now; fix it instead of deferring. A problem this round's own code created or worsened cannot be silently deferred at all. "Non-trivial" is not a Q2 yes; only "design work required" or "product owner input needed" is. Add a TODO comment per project convention. Note where.
    - **Won't-Do** — only when doing it would actively harm. Required: rationale citing source arguing no one should ever do this.
 5. Re-run build/tests. Commit revision.
 6. Write dispositions doc. Per finding:
@@ -141,6 +141,7 @@ Inputs: design path, working dir, base, current HEAD, **all notes file paths**, 
    - Disposition: Fixed | TODO(slug) | Won't-Do
    - Action: <what + where (file:line); TODO slug; or "no change" for Won't-Do>
    - Severity assessment: <consequence in 1-2 sentences>
+   - Rubric (TODO only): Q1 <yes/no + one line why> / Q2 <yes/no + one line why>
    - Rationale (Won't-Do only): <argument with source>
    ```
 
@@ -165,7 +166,7 @@ Orchestrator may later ask to push a named repo + branch (separate explicit step
 ## Rules
 
 - Touch only code the design describes + the implementation log.
-- **Comment hygiene.** Comments state what the code currently does, tersely. Never reference workflow/design/ADR docs (`// per design.md §3`, `// see requirements-delta-2`, `// as decided in the ADR`) — those docs are ephemeral; a comment pointing at one rots when the doc is gone, so the code must stand alone. No changelog comments (what the code *used to* do or how it changed). This is a standing project standard, not a reviewer's invention: when slop/quality reviewers flag such a comment, they are right — disposition **Fixed** (delete or rewrite the comment). A Won't-Do resting on "there is no such rule" is wrong; the only valid Won't-Do is showing the comment does *not* actually reference an ephemeral doc / is *not* changelog-style (the reviewer misread).
+- **Comment hygiene.** Comments state what the code currently does, tersely. Never reference workflow/design/ADR docs (`// per design.md §3`, `// see requirements-delta-2`, `// as decided in the ADR`) — those docs are ephemeral; a comment pointing at one rots when the doc is gone, so the code must stand alone. No changelog comments (what the code *used to* do or how it changed). This is a standing project standard, not a reviewer's invention: when the prepass/citizen reviewers flag such a comment, they are right — disposition **Fixed** (delete or rewrite the comment). A Won't-Do resting on "there is no such rule" is wrong; the only valid Won't-Do is showing the comment does *not* actually reference an ephemeral doc / is *not* changelog-style (the reviewer misread).
 - Intermediate commit messages: short conventional, fine.
 - Toolchain failure (missing compiler, missing pkg manager) → STOP, report. Don't install or work around.
 - **Batch independent tool calls — N `<invoke>` blocks inside ONE `<function_calls>` block.** Multiple `Read`s, multiple `Edit`s on different files, `Read`+`Grep`+`Bash` for orientation — all parallel. Sequential only when call B's input depends on call A's output. Separate `<function_calls>` blocks across turns = serial; each re-pays the full input-token cost.
