@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.15.0 — 2026-07-12
+
+usage-guard: per-percent alarms from 90% up, tiers moved to 90/94/97, and faster polling while alerting — so a session actually watches usage tick toward the wall (two parallel sessions can burn the tail of a window fast).
+
+- **Alarm on every 1% increase from 90%.** The watchdog previously fired only on tier crossings; now once utilization hits 90% it wakes the session on every integer-percent increase. Alarm lines are `USAGE-<pct>` (e.g. `USAGE-92`) with a tier-based instruction body; no duplicate alarms for the same percentage, and the counter resets on `USAGE-RESET`.
+- **Tiers moved from 90/95/98 to 90/94/97** (mild / escalation / wind-down), buying more headroom before the wall.
+- **Alert-mode poll cap of 120s.** The adaptive cadence could sleep up to 480s at 90%, batching several percent into one jump; while in any alert tier polls now come at most 120s apart so per-percent ticks are actually observed.
+- **SKILL.md doctrine rewritten** around the `USAGE-<pct>` format with tier ranges (90–93 / 94–96 / 97+); CLAUDE.md updated to match.
+
 ### 0.14.1 — 2026-07-12
 
 usage-guard hardening: the watchdog now rides through the window reset instead of terminating, times the reset message correctly, and the manual check surfaces model-scoped weekly caps.

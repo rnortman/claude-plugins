@@ -12,23 +12,26 @@
 # .five_hour.resets_at (ISO 8601). If it changes shape, this script disarms loudly
 # rather than guessing.
 #
-# Tiers: 90 (mild), 95 (escalate), 98 (wind down). This process does NOT terminate on
-# alert — it keeps running, and once the window rolls over it wakes the session with
-# USAGE-RESET, then stays running to guard the new window (silent again until 90%).
+# Tiers: 90 (mild), 94 (escalate), 97 (wind down). Once utilization reaches 90%, the
+# watchdog wakes the session on EVERY integer-percent increase (90, 91, 92, ...), not
+# just tier crossings — the message body is tier-based, but the session gets to watch
+# usage tick up (two parallel sessions can burn the tail of a window fast). This
+# process does NOT terminate on alert — it keeps running, and once the window rolls
+# over it wakes the session with USAGE-RESET, then stays running to guard the new
+# window (silent again until 90%).
 #
 # Poll cadence: (99 - utilization) minutes, clamped to [60s, 480s], so the 60s floor
-# is only reached at 99% — be kind to the API. But whenever we are in ANY alert tier,
-# each sleep is additionally capped so it never overshoots the window's nominal reset
-# time + 45s. This is uniform across tiers on purpose: normal cadence still catches
-# every tier crossing (you can't sleep through 95 or 98), and the reset+45 cap still
-# lands a wake right after the real reset. USAGE-RESET fires only once we're at/after
-# reset+45 AND the API confirms the roll (utilization dropped, or resets_at jumped a
-# fresh window). The 45s cushion matters: the API can report the drop a few seconds
-# early, and firing before the real reset just wakes the session back into the still-
-# throttled old window.
+# is only reached at 99% — be kind to the API. While in ANY alert tier the cadence is
+# further capped at 120s, so per-percent ticks are actually observed rather than
+# batched into one multi-percent jump, and each sleep is additionally capped so it
+# never overshoots the window's nominal reset time + 45s. USAGE-RESET fires only once
+# we're at/after reset+45 AND the API confirms the roll (utilization dropped, or
+# resets_at jumped a fresh window). The 45s cushion matters: the API can report the
+# drop a few seconds early, and firing before the real reset just wakes the session
+# back into the still-throttled old window.
 #
 # Env:
-#   WATCHDOG_EXIT_ON_ALERT=1  exit after the first tier line (fallback mode for
+#   WATCHDOG_EXIT_ON_ALERT=1  exit after the first alarm line (fallback mode for
 #                             run_in_background, which only notifies on exit;
 #                             the session must re-arm after each alarm). In this mode
 #                             the reset-wait logic below never runs.
@@ -64,6 +67,9 @@ to_epoch() {
 
 fail_count=0
 last_tier=0
+# Highest integer utilization already announced this window; a new alarm fires
+# whenever current utilization exceeds it (and is >= 90). Reset on USAGE-RESET.
+last_notified_util=0
 # Nominal reset (epoch) of the window we're currently guarding — the boundary we're
 # waiting to cross. Resynced to the live resets_at every idle poll (last_tier==0), but
 # HELD FIXED for the whole time we're alerting, so a poll that lands after the roll but
@@ -102,15 +108,16 @@ while :; do
 
   tier=0
   [ "$util" -ge 90 ] && tier=1
-  [ "$util" -ge 95 ] && tier=2
-  [ "$util" -ge 98 ] && tier=3
+  [ "$util" -ge 94 ] && tier=2
+  [ "$util" -ge 97 ] && tier=3
 
-  if [ "$tier" -gt "$last_tier" ]; then
+  if [ "$tier" -gt 0 ] && [ "$util" -gt "$last_notified_util" ]; then
     case "$tier" in
-      1) echo "USAGE-90: 5h usage at ${util}% (resets ${resets}). Set a cron wakeup for after reset NOW as insurance; keep working; prefer serial over parallel subagents." ;;
-      2) echo "USAGE-95: 5h usage at ${util}% (resets ${resets}). If the cron wakeup is not set, set it NOW. Only launch subagent work that is strictly bounded and small." ;;
-      3) echo "USAGE-98: 5h usage at ${util}% (resets ${resets}). Wind down now: checkpoint and end your turn. This watchdog stays running and will wake you with USAGE-RESET ~45s after the window resets; a cron wakeup as backup insurance is still wise." ;;
+      1) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). Set a cron wakeup for after reset NOW as insurance; keep working; prefer serial over parallel subagents." ;;
+      2) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). ESCALATION (>=94%). If the cron wakeup is not set, set it NOW. Only launch subagent work that is strictly bounded and small." ;;
+      3) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). WIND DOWN (>=97%): checkpoint and end your turn. This watchdog stays running and will wake you with USAGE-RESET ~45s after the window resets; a cron wakeup as backup insurance is still wise." ;;
     esac
+    last_notified_util=$util
     last_tier=$tier
     # Lock in the boundary on first entry into alert if idle syncing never captured one
     # (e.g. the session started already above 90%).
@@ -123,11 +130,13 @@ while :; do
          && { [ "$util" -lt 50 ] || [ "$reset_epoch" -gt $((boundary_epoch + 300)) ]; }; then
         echo "USAGE-RESET: 5h window reset; usage now ${util}%. Normal operation may resume."
         last_tier=0
+        last_notified_util=0
       fi
     elif [ "$util" -lt 50 ]; then
       # No parseable reset time — fall back to a bare utilization drop (can't time-gate).
       echo "USAGE-RESET: 5h window reset; usage now ${util}%. Normal operation may resume."
       last_tier=0
+      last_notified_util=0
     fi
   fi
 
@@ -140,13 +149,18 @@ while :; do
   interval=$(( (99 - util) * 60 ))
   [ "$interval" -lt 60 ] && interval=60
   [ "$interval" -gt 480 ] && interval=480
-  # ...but while alerting, never sleep past the nominal reset + 45s, so the next wake
-  # lands right after the real reset (floor 30s if we're already past it and awaiting
-  # a lagging roll). Applies at every tier, so tier crossings are never slept through.
-  if [ "$last_tier" -gt 0 ] && [ "$boundary_epoch" -gt 0 ]; then
-    to_reset=$(( boundary_epoch + 45 - now ))
-    [ "$to_reset" -lt "$interval" ] && interval=$to_reset
-    [ "$interval" -lt 30 ] && interval=30
+  if [ "$last_tier" -gt 0 ]; then
+    # ...but while alerting, poll at most every 120s so per-percent ticks are seen
+    # (not batched into one multi-percent jump)...
+    [ "$interval" -gt 120 ] && interval=120
+    # ...and never sleep past the nominal reset + 45s, so the next wake lands right
+    # after the real reset (floor 30s if we're already past it and awaiting a
+    # lagging roll).
+    if [ "$boundary_epoch" -gt 0 ]; then
+      to_reset=$(( boundary_epoch + 45 - now ))
+      [ "$to_reset" -lt "$interval" ] && interval=$to_reset
+      [ "$interval" -lt 30 ] && interval=30
+    fi
   fi
 
   sleep "$interval"
