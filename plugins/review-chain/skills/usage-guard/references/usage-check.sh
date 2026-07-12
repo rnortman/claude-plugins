@@ -29,5 +29,11 @@ jq -e '.five_hour.utilization' <<<"$resp" >/dev/null 2>&1 || {
   exit 1
 }
 
-jq -r '"5-hour:  \(.five_hour.utilization)%  (resets \(.five_hour.resets_at))",
-       "7-day:   \(.seven_day.utilization)%  (resets \(.seven_day.resets_at))"' <<<"$resp"
+jq -r '
+  "5-hour:  \(.five_hour.utilization)%  (resets \(.five_hour.resets_at))",
+  "7-day:   \(.seven_day.utilization)%  (resets \(.seven_day.resets_at))",
+  # Model-scoped limits (e.g. a Fable-specific weekly cap) live in .limits[] with a
+  # non-null .scope; the top-level seven_day_* fields are null now. Print each one.
+  (.limits // [] | map(select(.scope != null)) | .[] |
+    "\(if .group == "weekly" then "7-day" elif .group == "session" then "5-hour" else .group end) (\(.scope.model.display_name // .scope.surface // .kind)):  \(.percent)%  (resets \(.resets_at))")
+' <<<"$resp"

@@ -4,6 +4,16 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.14.1 — 2026-07-12
+
+usage-guard hardening: the watchdog now rides through the window reset instead of terminating, times the reset message correctly, and the manual check surfaces model-scoped weekly caps.
+
+- **usage-watchdog.sh no longer exits on alert.** After `USAGE-98` it keeps running, waits out the window, and — once the 5-hour window actually rolls over — wakes the session with `USAGE-RESET`, then stays running to guard the new window (silent again until 90%). The scheduled cron wakeup is now backup insurance, not the primary mechanism.
+- **Reset message is time-gated (fixes early/false resets).** The API can report the utilization drop a few seconds *before* the real reset; firing then just woke the session back into the still-throttled old window. `USAGE-RESET` now fires only once we're ≥45s past the guarded window's nominal reset time **and** the API confirms the roll (utilization dropped, or `resets_at` jumped forward a fresh window). The guarded boundary is held fixed for the whole alert so a poll landing in the post-roll cushion can't overwrite it with the next window's reset time (which had made `USAGE-RESET` unreachable and frozen the next window's tier alarms).
+- **Uniform sleep pacing across tiers.** While in any alert tier, each sleep is capped so it never overshoots the nominal reset + 45s (floored at 30s) — so tier crossings (95→98) are never slept through while still landing a wake right after the real reset.
+- **Portability + robustness.** `to_epoch` now parses the real timestamp shapes on BSD/macOS (`Z` suffix, fractional seconds, `+HH:MM` offsets), so the time-gate isn't silently dead there; a non-numeric `utilization` now routes to the loud `WATCHDOG-DISARMED` path instead of crashing the loop under `set -u`.
+- **usage-check.sh reports model-scoped weekly caps.** The top-level `seven_day_*` fields are `null` now; scoped limits (e.g. a Fable-specific weekly cap) live in `.limits[]` with a non-null `.scope`. The check now prints each one generically, so any future scoped limit surfaces too.
+
 ### 0.14.0 — 2026-07-12
 
 New `/usage-guard` skill: an opt-in, user-invoked-only watchdog on the account's 5-hour usage window, so a long-running session schedules its own post-reset wakeup instead of hitting the limit mid-task.
