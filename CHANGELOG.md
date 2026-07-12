@@ -4,7 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
-### 0.13.0 — 2026-07-10
+### 0.14.0 — 2026-07-12
+
+New `/usage-guard` skill: an opt-in, user-invoked-only watchdog on the account's 5-hour usage window, so a long-running session schedules its own post-reset wakeup instead of hitting the limit mid-task.
+
+- **usage-guard skill** (`disable-model-invocation: true` — the user decides when a session is long-running enough to need it; it stays out of the orchestrator prompt entirely). Arms `references/usage-watchdog.sh` under the Monitor tool (`persistent: true`); each alarm line wakes the session — even fully idle — as its own notification. Carries the response doctrine per tier plus a `run_in_background` + `WATCHDOG_EXIT_ON_ALERT=1` re-arm fallback for Monitor-less sessions.
+- **usage-watchdog.sh**: polls `GET /api/oauth/usage` (undocumented endpoint backing the CLI's `/usage` view; response shape verified 2026-07-12) with the OAuth token from `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json`, re-read every poll so profile-switched sessions hit the right account and CLI token refreshes are picked up. Adaptive cadence: `(99 − utilization)` minutes clamped to [60s, 480s] — the 60s floor is only reached at 99%. Escalating tiers: `USAGE-90` (schedule the post-reset cron wakeup now as insurance; prefer serial subagents), `USAGE-95` (wakeup must be set; only small strictly-bounded subagent work), `USAGE-98` (go to sleep now — terminal, exits). Also emits `USAGE-RESET` if the window rolls over while armed, and disarms loudly (`WATCHDOG-DISARMED`) rather than silently on missing credentials or 5 consecutive read failures.
+- **usage-check.sh**: one-shot formatted read of the 5-hour and 7-day windows for manual spot checks (usable by anyone; only arming is skill-gated).
+- **CLAUDE.md**: documents the new skill.
 
 Restructure the review architecture: consolidate ten reviewers into five grouped by reading mode, run the deep pass as sequential waves with fixes between them, and make the judge scan the fixes no reviewer saw. Finding IDs become meaningful slugs. Wall-clock time was deliberately traded away for token efficiency and outcome quality.
 
