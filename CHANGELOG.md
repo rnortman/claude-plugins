@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.16.0 — 2026-07-13
+
+usage-guard: the watchdog is now tenacious — API outages no longer make it give up. It rides through failures with rate-limited degraded notices, and the session owns the kill switch.
+
+- **No more disarm on read failures.** The old behavior (`WATCHDOG-DISARMED` + exit after 5 consecutive unreadable polls) treated a routine extended API outage as fatal. The watchdog now retries forever (every 120s while failing — polling is cheap; only stdout lines cost LLM tokens).
+- **New `WATCHDOG-DEGRADED` / `WATCHDOG-RECOVERED` events.** After 5 consecutive failures the session gets one degraded notice (blind duration, failure count, "do not assume headroom", and an explicit reminder that it can kill the monitor), then at most one re-notice per 30 minutes while the outage continues. When readings resume, one recovery line reports the blind duration and current utilization. Short blips (under 5 failures) stay silent.
+- **`WATCHDOG-DISARMED` narrowed** to the startup no-OAuth-credentials case, where retrying can't help. The `WATCHDOG_EXIT_ON_ALERT=1` background fallback also exits on a degraded notice (background shells only surface output on exit).
+- **SKILL.md: new "Killing the watchdog" doctrine.** The watchdog never self-terminates, so the session must kill the monitor when the task is done or it's blocked waiting on the user — waking an idle session is a full prompt-cache miss, so an unattended watchdog wastes exactly the tokens it exists to protect. Re-arm when active work resumes.
+
 ### 0.15.0 — 2026-07-12
 
 usage-guard: per-percent alarms from 90% up, tiers moved to 90/94/97, and faster polling while alerting — so a session actually watches usage tick toward the wall (two parallel sessions can burn the tail of a window fast).

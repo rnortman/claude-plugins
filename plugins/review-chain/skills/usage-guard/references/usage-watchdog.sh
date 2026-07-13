@@ -9,8 +9,17 @@
 # token from $CLAUDE_CONFIG_DIR/.credentials.json (falling back to ~/.claude).
 # This is an UNDOCUMENTED endpoint (the one the CLI's own /usage view is fed from);
 # response shape verified 2026-07-12: .five_hour.utilization (percent, float) and
-# .five_hour.resets_at (ISO 8601). If it changes shape, this script disarms loudly
-# rather than guessing.
+# .five_hour.resets_at (ISO 8601).
+#
+# Failure posture: TENACIOUS. API outages lasting hours are routine, so unreadable
+# polls never make this script give up — it keeps retrying forever. What IS
+# strictly rate-limited is talking to the session about it (each stdout line wakes
+# the session and costs LLM tokens): one WATCHDOG-DEGRADED line after
+# DEGRADED_AFTER_FAILURES consecutive failures, then a re-notice at most every
+# DEGRADED_RENOTIFY_SECS while the outage continues, then one WATCHDOG-RECOVERED
+# line when polling works again. The session owns the kill switch — it runs this
+# script under the Monitor tool and can terminate it at any time if monitoring is
+# no longer worth the wake-ups.
 #
 # Tiers: 90 (mild), 94 (escalate), 97 (wind down). Once utilization reaches 90%, the
 # watchdog wakes the session on EVERY integer-percent increase (90, 91, 92, ...), not
@@ -31,17 +40,25 @@
 # back into the still-throttled old window.
 #
 # Env:
-#   WATCHDOG_EXIT_ON_ALERT=1  exit after the first alarm line (fallback mode for
-#                             run_in_background, which only notifies on exit;
-#                             the session must re-arm after each alarm). In this mode
-#                             the reset-wait logic below never runs.
+#   WATCHDOG_EXIT_ON_ALERT=1  exit after the first alarm (or degraded) line —
+#                             fallback mode for run_in_background, which only
+#                             notifies on exit; the session must re-arm after each
+#                             alarm. In this mode the reset-wait logic never runs.
 set -u
 
 CONF="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CREDS="$CONF/.credentials.json"
 ENDPOINT="https://api.anthropic.com/api/oauth/usage"
 EXIT_ON_ALERT="${WATCHDOG_EXIT_ON_ALERT:-0}"
-MAX_CONSECUTIVE_FAILURES=5
+# Consecutive unreadable polls before the first WATCHDOG-DEGRADED line. Short
+# blips (a failure or two between good polls) are absorbed silently.
+DEGRADED_AFTER_FAILURES=5
+# Minimum seconds between degraded re-notices while an outage continues. Each
+# notice wakes the session (LLM tokens are expensive) — keep these rare.
+DEGRADED_RENOTIFY_SECS=1800
+# Retry cadence while polls are failing. Polling is cheap (no tokens); 120s keeps
+# recovery detection snappy without hammering a struggling API.
+FAIL_RETRY_SECS=120
 
 if [ ! -f "$CREDS" ]; then
   echo "WATCHDOG-DISARMED: no OAuth credentials at $CREDS (API-key session, or logged out). Usage monitoring unavailable; tell the user."
@@ -66,6 +83,11 @@ to_epoch() {
 }
 
 fail_count=0
+# Outage bookkeeping: when the current failure streak started, whether the session
+# has been told about it, and when it was last told (for re-notice rate-limiting).
+first_fail_epoch=0
+degraded_notified=0
+last_degraded_notice=0
 last_tier=0
 # Highest integer utilization already announced this window; a new alarm fires
 # whenever current utilization exceeds it (and is >= 90). Reset on USAGE-RESET.
@@ -91,15 +113,31 @@ while :; do
   # Treat a missing OR non-numeric utilization as an unreadable poll — a shape change
   # must not reach the arithmetic below and crash the loop silently under `set -u`.
   if [ -z "$util_raw" ] || ! [[ "$util_raw" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    now=$(date +%s)
     fail_count=$((fail_count + 1))
-    if [ "$fail_count" -ge "$MAX_CONSECUTIVE_FAILURES" ]; then
-      echo "WATCHDOG-DISARMED: could not read usage $fail_count times in a row (token expired? endpoint changed? network?). Usage monitoring is DOWN — do not assume headroom; tell the user."
-      exit 0
+    [ "$first_fail_epoch" -eq 0 ] && first_fail_epoch=$now
+    # Never give up — API outages lasting hours are routine. Keep retrying, but
+    # rate-limit what reaches the session: first notice after the streak clears
+    # DEGRADED_AFTER_FAILURES, then at most one re-notice per DEGRADED_RENOTIFY_SECS.
+    if [ "$fail_count" -ge "$DEGRADED_AFTER_FAILURES" ] \
+       && [ $((now - last_degraded_notice)) -ge "$DEGRADED_RENOTIFY_SECS" ]; then
+      blind_min=$(( (now - first_fail_epoch) / 60 ))
+      echo "WATCHDOG-DEGRADED: could not read usage for ~${blind_min}min ($fail_count consecutive failures — API outage? expired token?). Monitoring is BLIND — do not assume headroom. I keep retrying every ${FAIL_RETRY_SECS}s and will send WATCHDOG-RECOVERED when readings resume; further degraded notices are rate-limited to one per $((DEGRADED_RENOTIFY_SECS / 60))min. If you no longer need usage monitoring, kill this monitor."
+      degraded_notified=1
+      last_degraded_notice=$now
+      [ "$EXIT_ON_ALERT" = "1" ] && exit 0
     fi
-    sleep 120
+    sleep "$FAIL_RETRY_SECS"
     continue
   fi
+  if [ "$degraded_notified" -eq 1 ]; then
+    blind_min=$(( ($(date +%s) - first_fail_epoch) / 60 ))
+    echo "WATCHDOG-RECOVERED: usage readings resumed after ~${blind_min}min blind; 5h usage now ${util_raw%.*}%. Normal monitoring restored."
+  fi
   fail_count=0
+  first_fail_epoch=0
+  degraded_notified=0
+  last_degraded_notice=0
 
   util=${util_raw%.*}   # "38.0" -> "38"
   resets=$(jq -r '.five_hour.resets_at // "unknown"' <<<"$resp" 2>/dev/null)
