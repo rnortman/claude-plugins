@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.17.0 — 2026-07-16
+
+Requirements-refiner and designer see the forest: both must ground their work in the project's big picture, and both may spawn their own explorers when the handed exploration falls short.
+
+- **requirements-refiner: "See the forest" mission.** The refiner must gather enough context to understand the project's intent, purpose, and architectural principles — not just the immediate request — and the refined request situates the ask as one tree within that forest, naming highly relevant neighboring trees. Explicitly not a requirements lawyer: no "specification" output, no numbered-requirements paragraphs; requirement identifiers, when needed, are meaningful slugs. Draft mode gains a "The forest" section in the doc structure.
+- **designer: "Forest first, then trees."** The designer establishes big-picture project context before prescribing anything, in every mode (draft, revise, respond, delta) — building it itself when the requirements phase was skipped — then focuses on the trees: the placement and shape of each, and which to cut down.
+- **Both agents authorized to spawn `review-chain:explorer` subagents** when the exploration they were handed leaves needed questions unanswered, and to read code directly — reserved for the most critical pieces, leaning on explorers otherwise.
+
 ### 0.16.0 — 2026-07-13
 
 usage-guard: the watchdog is now tenacious — API outages no longer make it give up. It rides through failures with rate-limited degraded notices, and the session owns the kill switch.
