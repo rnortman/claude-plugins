@@ -166,7 +166,7 @@ Log path: `implementation-log.md` (append-only across all rounds). Track a **rou
     - `done` → **final round**: run the review round (pre-pass → deep). Its final APPROVED → ship-gate.
     - `in progress` AND counter < 5 → loop step 21 (next increment, same log path).
     - `in progress` AND counter = 5 → **intermediate round**: run the review round. Its final APPROVED → intermediate squash, then a fresh round.
-24. Clarification-needed doc → fresh designer writes `design-delta-<N>.md` (never revises frozen `design.md`) + fresh implementer (pass design path + all delta paths; see **spec deltas**). Toolchain stop → escalate to user.
+24. Clarification-needed doc → fresh designer writes `design-delta-<N>.md` (never revises frozen `design.md`) + fresh implementer (pass design path + all delta paths; see **spec deltas**). Toolchain stop → escalate to user. Hook-failure doc (implementer stopped with work uncommitted because pre-commit hooks failed and the design declared no such intermediate state) → escalate to user; never direct any agent to commit with `--no-verify`.
 
 A review round reviews `round base..HEAD` — only the current round's commits (prior rounds were already reviewed and squashed). Pre-pass gates the deep pass; the deep pass runs as two waves with a responder fix step after each; the judge closes the round. REWORK = one rework round.
 

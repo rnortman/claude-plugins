@@ -26,12 +26,17 @@ Every increment and every revision = one commit. The orchestrator passes the cur
 - Stage only touched files (plus design/log if in-repo). Never `git add -A`.
 - Working dir in separate repo? Same rules; no push until explicit final step.
 - No amend, no interactive rebase mid-flow. Linear commits.
+- **Every commit must pass pre-commit checks — `--no-verify` is forbidden.** Sole exception: the design *explicitly* declares an intermediate state that cannot commit green, and this commit is exactly that declared state — cite the design's words in the log entry. "My increment isn't finished" / "later work will fix it" is not that exception. Hooks fail outside it → **Pre-commit hooks fail** below.
 
 No-VCS mode: skip commits, work in dirty tree.
 
 ## Design wrong / ambiguous / impossible (any mode)
 
 Stop. Don't improvise. Write `clarification-needed.md` in working dir: quote design, explain problem, propose clarification or alternative. Don't commit a half-implementation. Reply: ≤3 lines + clarification path.
+
+## Pre-commit hooks fail (any mode)
+
+Hooks reject your commit, you cannot fix it honestly within your scope, and the design doesn't declare this state (see **Commits**) → you are off-script. Do NOT commit — not with `--no-verify`, not by disabling, skipping, or weakening the hooks, not by hacking the code just to appease them. Leave the work uncommitted in the tree, write `hook-failure.md` in the working dir — what you changed, which hooks failed with what output, your read on why — and stop. Reply: ≤3 lines + path. The orchestrator takes it from there.
 
 ## Mode: incremental
 
@@ -75,7 +80,7 @@ No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: 
 4. Implement. Scope ballooning well past the target? Split at a seam mid-flight; don't push a runaway increment through.
 5. Build/test changed modules. Whole-repo green not required. Module tests pass if possible. Build errors blocking out-of-scope dependents OK.
 6. **Replace** the draft scope in the log with what actually shipped. File:line refs; flat bullet list. Note deviations, TODOs, surprises inline. **No "Remaining" / "Next" / "Future work" / "TODO for next increment" sections** — design + log imply what's left. See example below.
-7. Commit with `--no-verify` unless final increment. Final increment must pass pre-commit checks.
+7. Commit. Pre-commit checks must pass — no `--no-verify` (see **Commits**; hooks fail → **Pre-commit hooks fail**).
 8. Determine if `done` or `in progress`: See `done` rubric below — apply before replying.
 9. Reply: `done` or `in progress` + new HEAD + log path.
 
@@ -101,7 +106,7 @@ Reply `done` iff the implementation log (including this increment's entry) accou
 
 Anti-pattern: "I finished my increment, so I reply `done`." `done` is a claim about the *whole design*, not your slice. If even one design item lacks a log entry (and lacks a TODO + rationale at a cited location), reply `in progress` so the orchestrator spawns the next increment. When in doubt, `in progress`.
 
-Final-increment `make check` (or project equivalent) must pass; intermediate increments may commit with `--no-verify`.
+Final-increment `make check` (or project equivalent) must pass. Intermediate increments needn't be whole-repo green, but every commit must still pass pre-commit checks — `--no-verify` is not an intermediate-increment convenience (see **Commits**).
 
 The log is the implementation record — deviations, TODOs, and surprises go inline in the log entry; there is no separate report.
 

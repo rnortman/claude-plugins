@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.18.0 — 2026-07-16
+
+Green commits always: the implementer's blanket permission to commit intermediate increments with `--no-verify` is gone. Implementers were leaning on it constantly to commit non-green code — and citing their own agent definition as requiring it.
+
+- **implementer: `--no-verify` forbidden.** Every commit must pass pre-commit checks. Sole exception: the design *explicitly* declares an intermediate state that cannot commit green, and the commit is exactly that declared state (design's words cited in the log entry). "My increment isn't finished" doesn't qualify.
+- **New "Pre-commit hooks fail" stop procedure (any mode).** Hooks reject a commit outside the design-declared exception and it can't be fixed honestly within scope → the implementer is off-script: no committing, no disabling/skipping/weakening hooks, no hacking code to appease them. It leaves the work uncommitted, writes `hook-failure.md` (what changed, which hooks failed with what output, its read on why), and stops.
+- **orchestrator: routes the hook-failure stop** — escalate to the user; never direct any agent to commit with `--no-verify`.
+
 ### 0.17.0 — 2026-07-16
 
 Requirements-refiner and designer see the forest: both must ground their work in the project's big picture, and both may spawn their own explorers when the handed exploration falls short.
