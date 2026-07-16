@@ -4,6 +4,12 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.19.0 — 2026-07-16
+
+Implementer subagent ban: implementers were reading the design and code to orient, deciding the scope was too big, and then spawning subagents to do the actual implementation — burning the orientation work and handing the edits to a context-free agent.
+
+- **implementer: new "No subagents (every mode)" rule.** Never spawn subagents — no `Agent`/`Task` calls, no delegating the implementation; every code edit is made by the implementer itself. Scope too big? Cut scope: shrink the increment to a coherent slice at a natural seam and reply `in progress` so the orchestrator spawns the next increment.
+
 ### 0.18.0 — 2026-07-16
 
 Green commits always: the implementer's blanket permission to commit intermediate increments with `--no-verify` is gone. Implementers were leaning on it constantly to commit non-green code — and citing their own agent definition as requiring it.

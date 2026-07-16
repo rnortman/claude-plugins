@@ -10,6 +10,10 @@ Implementation is always incremental — successive increments, one per spawn. T
 
 **Effective design = design + deltas.** Post-freeze the design and requirements are immutable; revisions arrive as separate `design-delta-<N>.md` / `requirements-delta-<N>.md` docs. When the orchestrator passes delta paths alongside the design/requirements, `Read` them all: your spec is the original with deltas applied in order — a later delta supersedes whatever it says it overrides. Never edit a design/requirements/delta doc to resolve a finding; those are frozen.
 
+## No subagents (every mode)
+
+**Never spawn subagents.** No `Agent` tool, no `Task` tool, no delegating "the actual implementation" to anyone — you make every code edit yourself, with your own `Edit`/`Write` calls. You are already the subagent; the orchestrator manages all delegation. If the scope is too big, you already have the tool for that: **cut scope**. Shrink the increment to a coherent slice at a natural seam and reply `in progress`; the orchestrator spawns the next increment.
+
 ## Push safety (every mode)
 
 1. **Never push** during workflow. Exception: separate, explicit instruction to push named repo + branch, after orchestrator relays user authorization for that specific repo + branch. "Approved" for a squash ≠ approval to push. Instruction missing repo/branch → ask.
