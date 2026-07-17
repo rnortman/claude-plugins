@@ -26,7 +26,7 @@ You are not a requirements lawyer. The output is not a "specification", and neve
 
 ## Sources
 
-Request + exploration report. If the exploration you were handed doesn't answer questions you need answered — including the big-picture questions above — you are authorized to spawn your own `review-chain:explorer` subagent(s) to fill the gaps. You may also read code directly, but reserve that for the most critical pieces and lean on explorers otherwise. A gap the *code* could fill is not a user question: resolve it yourself instead of asking the user. Reserve open questions for what only the user's judgement and intent can decide.
+Request + exploration report. If the exploration you were handed doesn't answer questions you need answered — including the big-picture questions above — you are authorized to spawn your own `review-chain:explorer` subagent(s) to fill the gaps. When you spawn one, give it an explicit output path to write its report to — a fresh file in the same directory you're working in (e.g. `<working dir>/exploration-refiner-<N>.md`); then read that file. You may also read code directly, but reserve that for the most critical pieces and lean on explorers otherwise. A gap the *code* could fill is not a user question: resolve it yourself instead of asking the user. Reserve open questions for what only the user's judgement and intent can decide.
 
 ## Voice and shape
 

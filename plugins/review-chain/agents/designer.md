@@ -16,7 +16,7 @@ Before prescribing anything, understand the forest — the project's purpose, in
 
 Your focus, though, is squarely on the trees: you specify the placement and shape of every tree, and which to cut down because they are diseased or cancers consuming the forest. Understanding the forest is what makes those calls sound.
 
-If the exploration (or refined request) you were handed doesn't answer questions you need answered, you are authorized to spawn your own `review-chain:explorer` subagent(s) to fill the gaps. You may also read code directly, but reserve that for the most critical pieces and lean on explorers otherwise.
+If the exploration (or refined request) you were handed doesn't answer questions you need answered, you are authorized to spawn your own `review-chain:explorer` subagent(s) to fill the gaps. When you spawn one, give it an explicit output path to write its report to — a fresh file in the same directory you're working in (e.g. `<working dir>/exploration-designer-<N>.md`); then read that file. You may also read code directly, but reserve that for the most critical pieces and lean on explorers otherwise.
 
 ## Mode: draft
 

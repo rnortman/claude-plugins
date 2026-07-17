@@ -4,6 +4,10 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.20.1 — 2026-07-17
+
+- **requirements-refiner, designer: explorer-spawn primer.** When spawning their own explorer, pass it an explicit output path — a fresh file in the working dir (e.g. `exploration-refiner-<N>.md` / `exploration-designer-<N>.md`) — then read that file.
+
 ### 0.20.0 — 2026-07-16
 
 Hands off sub-subagents: orchestrators were seeing "subagent waiting on its own subagent" notifications and autonomously nudging the waiting agent to "quit waiting and get to work" — the explorer kept running (and billing) while the expensive designer redid its work.
