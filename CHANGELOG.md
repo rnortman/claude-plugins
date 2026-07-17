@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.20.2 — 2026-07-17
+
+usage-guard bug fixes: a rate-limited poll was misreported as a broken endpoint and answered by polling *harder*, and USAGE-RESET fired before the new window would actually accept requests.
+
+- **usage-check.sh, usage-watchdog.sh: report the API's own error.** An explicit `.error.type` (e.g. `rate_limit_error`) is now surfaced verbatim instead of being misdiagnosed as "unexpected response shape (token expired? endpoint changed?)". The endpoint is shared with the CLI's own `/usage` view and with any other session's watchdog on the account, so 429s are expected, not a break.
+- **usage-watchdog.sh: exponential backoff on failing polls.** The flat 120s failure retry was *faster* than the 480s healthy cadence, so getting rate-limited made the watchdog hammer the endpoint. Retries now back off 120s → 30min, resetting on the first good poll. The tenacious posture is unchanged — it still never gives up, and degraded notices to the session stay rate-limited.
+- **usage-watchdog.sh: settle delay before USAGE-RESET.** The API reports the window roll before requests are actually accepted in the new window, so a session woken the instant utilization dropped sent its first request into the still-throttled old window. Reset now has two guards: `RESET_CONFIRM_CUSHION_SECS=45` (when the roll is believed) and the new `RESET_SETTLE_SECS=60` (when the session is told). This also fixes the unparseable-`resets_at` fallback path, which previously fired on a bare utilization drop with no time gate at all.
+
 ### 0.20.1 — 2026-07-17
 
 - **requirements-refiner, designer: explorer-spawn primer.** When spawning their own explorer, pass it an explicit output path — a fresh file in the working dir (e.g. `exploration-refiner-<N>.md` / `exploration-designer-<N>.md`) — then read that file.

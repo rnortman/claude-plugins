@@ -24,6 +24,15 @@ resp=$(curl -sS --max-time 30 \
   -H "anthropic-beta: oauth-2025-04-20" \
   "$ENDPOINT" 2>&1) || { echo "usage unavailable: request failed: $resp"; exit 1; }
 
+# An explicit API error (rate_limit_error, authentication_error, ...) is not a shape
+# change — report it verbatim rather than guessing at the cause.
+api_err=$(jq -r '.error.type // empty' <<<"$resp" 2>/dev/null)
+if [ -n "$api_err" ]; then
+  api_msg=$(jq -r '.error.message // ""' <<<"$resp" 2>/dev/null)
+  echo "usage unavailable: API returned $api_err: $api_msg"
+  exit 1
+fi
+
 jq -e '.five_hour.utilization' <<<"$resp" >/dev/null 2>&1 || {
   echo "usage unavailable: unexpected response shape (token expired? endpoint changed?)"
   exit 1

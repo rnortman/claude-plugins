@@ -33,11 +33,17 @@
 # is only reached at 99% — be kind to the API. While in ANY alert tier the cadence is
 # further capped at 120s, so per-percent ticks are actually observed rather than
 # batched into one multi-percent jump, and each sleep is additionally capped so it
-# never overshoots the window's nominal reset time + 45s. USAGE-RESET fires only once
-# we're at/after reset+45 AND the API confirms the roll (utilization dropped, or
-# resets_at jumped a fresh window). The 45s cushion matters: the API can report the
-# drop a few seconds early, and firing before the real reset just wakes the session
-# back into the still-throttled old window.
+# never overshoots the window's nominal reset time + RESET_CONFIRM_CUSHION_SECS.
+#
+# USAGE-RESET is guarded twice, because the API rolls before the new window is usable:
+#   1. The roll is not BELIEVED until we're at/after reset+RESET_CONFIRM_CUSHION_SECS
+#      AND the API confirms it (utilization dropped, or resets_at jumped a fresh
+#      window) — the API can report the drop a few seconds early.
+#   2. The roll is not ANNOUNCED until a further RESET_SETTLE_SECS have passed —
+#      empirically there is a lag between the API reporting 0% and requests actually
+#      being accepted in the new window.
+# Firing early is the expensive failure: it wakes the session back into the still-
+# throttled old window, and the wake-up is wasted.
 #
 # Env:
 #   WATCHDOG_EXIT_ON_ALERT=1  exit after the first alarm (or degraded) line —
@@ -56,9 +62,21 @@ DEGRADED_AFTER_FAILURES=5
 # Minimum seconds between degraded re-notices while an outage continues. Each
 # notice wakes the session (LLM tokens are expensive) — keep these rare.
 DEGRADED_RENOTIFY_SECS=1800
-# Retry cadence while polls are failing. Polling is cheap (no tokens); 120s keeps
-# recovery detection snappy without hammering a struggling API.
+# Retry cadence while polls are failing, as an exponential backoff from FAIL_RETRY_SECS
+# doubling to FAIL_RETRY_MAX_SECS. A flat retry is actively harmful here: 120s is FASTER
+# than the 480s steady-state cadence, so a rate-limited poll would make us poll harder.
+# The endpoint is shared with the CLI's own /usage view and with any other session's
+# watchdog on this account, so a 429 means the account bucket is hot — back off.
 FAIL_RETRY_SECS=120
+FAIL_RETRY_MAX_SECS=1800
+# Cushion past the window's nominal reset before the API's roll is even believed. The
+# API can report the drop a few seconds early.
+RESET_CONFIRM_CUSHION_SECS=45
+# Settle delay AFTER the roll is confirmed, before USAGE-RESET reaches the session.
+# The API reports 0% before the new window actually accepts requests, so a session
+# woken the instant utilization drops sends its first request into the old window and
+# gets throttled. Waiting costs one minute; firing early costs the wake-up entirely.
+RESET_SETTLE_SECS=60
 
 if [ ! -f "$CREDS" ]; then
   echo "WATCHDOG-DISARMED: no OAuth credentials at $CREDS (API-key session, or logged out). Usage monitoring unavailable; tell the user."
@@ -88,6 +106,8 @@ fail_count=0
 first_fail_epoch=0
 degraded_notified=0
 last_degraded_notice=0
+# Current retry interval; doubles per consecutive failure, reset on a good poll.
+fail_retry=$FAIL_RETRY_SECS
 last_tier=0
 # Highest integer utilization already announced this window; a new alarm fires
 # whenever current utilization exceeds it (and is >= 90). Reset on USAGE-RESET.
@@ -109,7 +129,11 @@ while :; do
       "$ENDPOINT" 2>/dev/null) || resp=""
   fi
 
-  util_raw=$(jq -r '.five_hour.utilization // empty' <<<"$resp" 2>/dev/null)
+  # Explicit API errors (rate_limit_error, authentication_error, ...) are unreadable polls
+  # too, but we can say WHY in the degraded line instead of guessing.
+  api_err=$(jq -r '.error.type // empty' <<<"$resp" 2>/dev/null)
+  util_raw=""
+  [ -z "$api_err" ] && util_raw=$(jq -r '.five_hour.utilization // empty' <<<"$resp" 2>/dev/null)
   # Treat a missing OR non-numeric utilization as an unreadable poll — a shape change
   # must not reach the arithmetic below and crash the loop silently under `set -u`.
   if [ -z "$util_raw" ] || ! [[ "$util_raw" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
@@ -122,12 +146,18 @@ while :; do
     if [ "$fail_count" -ge "$DEGRADED_AFTER_FAILURES" ] \
        && [ $((now - last_degraded_notice)) -ge "$DEGRADED_RENOTIFY_SECS" ]; then
       blind_min=$(( (now - first_fail_epoch) / 60 ))
-      echo "WATCHDOG-DEGRADED: could not read usage for ~${blind_min}min ($fail_count consecutive failures — API outage? expired token?). Monitoring is BLIND — do not assume headroom. I keep retrying every ${FAIL_RETRY_SECS}s and will send WATCHDOG-RECOVERED when readings resume; further degraded notices are rate-limited to one per $((DEGRADED_RENOTIFY_SECS / 60))min. If you no longer need usage monitoring, kill this monitor."
+      why="API outage? expired token?"
+      [ -n "$api_err" ] && why="API returned $api_err"
+      echo "WATCHDOG-DEGRADED: could not read usage for ~${blind_min}min ($fail_count consecutive failures — $why). Monitoring is BLIND — do not assume headroom. I keep retrying (backing off, currently every ${fail_retry}s) and will send WATCHDOG-RECOVERED when readings resume; further degraded notices are rate-limited to one per $((DEGRADED_RENOTIFY_SECS / 60))min. If you no longer need usage monitoring, kill this monitor."
       degraded_notified=1
       last_degraded_notice=$now
       [ "$EXIT_ON_ALERT" = "1" ] && exit 0
     fi
-    sleep "$FAIL_RETRY_SECS"
+    sleep "$fail_retry"
+    # Exponential backoff, capped — a struggling or rate-limiting endpoint must not be
+    # polled harder than a healthy one.
+    fail_retry=$(( fail_retry * 2 ))
+    [ "$fail_retry" -gt "$FAIL_RETRY_MAX_SECS" ] && fail_retry=$FAIL_RETRY_MAX_SECS
     continue
   fi
   if [ "$degraded_notified" -eq 1 ]; then
@@ -138,6 +168,7 @@ while :; do
   first_fail_epoch=0
   degraded_notified=0
   last_degraded_notice=0
+  fail_retry=$FAIL_RETRY_SECS
 
   util=${util_raw%.*}   # "38.0" -> "38"
   resets=$(jq -r '.five_hour.resets_at // "unknown"' <<<"$resp" 2>/dev/null)
@@ -153,7 +184,7 @@ while :; do
     case "$tier" in
       1) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). Set a cron wakeup for after reset NOW as insurance; keep working; prefer serial over parallel subagents." ;;
       2) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). ESCALATION (>=94%). If the cron wakeup is not set, set it NOW. Only launch subagent work that is strictly bounded and small." ;;
-      3) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). WIND DOWN (>=97%): checkpoint and end your turn. This watchdog stays running and will wake you with USAGE-RESET ~45s after the window resets; a cron wakeup as backup insurance is still wise." ;;
+      3) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). WIND DOWN (>=97%): checkpoint and end your turn. This watchdog stays running and will wake you with USAGE-RESET ~$((RESET_CONFIRM_CUSHION_SECS + RESET_SETTLE_SECS))s after the window resets; a cron wakeup as backup insurance is still wise." ;;
     esac
     last_notified_util=$util
     last_tier=$tier
@@ -162,16 +193,24 @@ while :; do
     [ "$boundary_epoch" -eq 0 ] && [ "$reset_epoch" -gt 0 ] && boundary_epoch=$reset_epoch
     [ "$EXIT_ON_ALERT" = "1" ] && exit 0
   elif [ "$last_tier" -gt 0 ]; then
-    # Reset detection, gated on being at/after the guarded window's nominal reset + 45s.
+    # Reset detection. Two independent guards, and both matter:
+    #   1. the confirm cushion below, gating when we BELIEVE the roll happened;
+    #   2. RESET_SETTLE_SECS, gating when we TELL the session about it.
+    rolled=0
     if [ "$boundary_epoch" -gt 0 ]; then
-      if [ "$now" -ge $((boundary_epoch + 45)) ] \
-         && { [ "$util" -lt 50 ] || [ "$reset_epoch" -gt $((boundary_epoch + 300)) ]; }; then
-        echo "USAGE-RESET: 5h window reset; usage now ${util}%. Normal operation may resume."
-        last_tier=0
-        last_notified_util=0
-      fi
+      [ "$now" -ge $((boundary_epoch + RESET_CONFIRM_CUSHION_SECS)) ] \
+        && { [ "$util" -lt 50 ] || [ "$reset_epoch" -gt $((boundary_epoch + 300)) ]; } \
+        && rolled=1
     elif [ "$util" -lt 50 ]; then
-      # No parseable reset time — fall back to a bare utilization drop (can't time-gate).
+      # No parseable reset time — fall back to a bare utilization drop (can't time-gate
+      # the confirmation, which makes the settle delay the only guard on this path).
+      rolled=1
+    fi
+    if [ "$rolled" -eq 1 ]; then
+      # Settle before speaking: the API reports the roll before the new window is
+      # actually usable. Sleeping here (rather than deferring to the next poll) keeps
+      # the delay exact and the state machine linear.
+      sleep "$RESET_SETTLE_SECS"
       echo "USAGE-RESET: 5h window reset; usage now ${util}%. Normal operation may resume."
       last_tier=0
       last_notified_util=0
@@ -191,11 +230,11 @@ while :; do
     # ...but while alerting, poll at most every 120s so per-percent ticks are seen
     # (not batched into one multi-percent jump)...
     [ "$interval" -gt 120 ] && interval=120
-    # ...and never sleep past the nominal reset + 45s, so the next wake lands right
-    # after the real reset (floor 30s if we're already past it and awaiting a
-    # lagging roll).
+    # ...and never sleep past the point where the roll becomes believable, so the next
+    # wake lands right after the real reset (floor 30s if we're already past it and
+    # awaiting a lagging roll).
     if [ "$boundary_epoch" -gt 0 ]; then
-      to_reset=$(( boundary_epoch + 45 - now ))
+      to_reset=$(( boundary_epoch + RESET_CONFIRM_CUSHION_SECS - now ))
       [ "$to_reset" -lt "$interval" ] && interval=$to_reset
       [ "$interval" -lt 30 ] && interval=30
     fi
