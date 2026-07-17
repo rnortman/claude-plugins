@@ -168,14 +168,45 @@ A requirements or design change needed after freeze? Never touch the frozen doc.
 
 Log path: `implementation-log.md` (append-only across all rounds). Track a **round base** (starts = original base), an **increment counter** (starts 0; reset to 0 at the start of each round), and a **round number `R`** (starts 1; increment at the start of each new round — see step 38). Step 24 applies throughout.
 
-21. Spawn fresh `implementer` mode "incremental". Pass: design path (+ any delta paths), requirements path, working dir, log path, round base, current HEAD.
+21. Spawn fresh `implementer` mode "incremental", **always with `run_in_background: true`** (see **Implementer watchdog** — you must stay awake to police its scope). Pass: design path (+ any delta paths), requirements path, working dir, log path, round base, current HEAD.
     - **End every incremental spawn prompt with this line, verbatim, as the last thing in the prompt** (recency reinforcement against the orient-before-deciding instinct; an exception to "no rubric restating"): `First two tool calls: parallel Read of input docs, then single Edit appending draft scope to log. No source reads, Grep, ls, or Bash before the log Edit.`
-22. Implementer commits its increment. Reply: `done` | `in progress` + HEAD + log path. Verify the frozen set (see **freeze**). Increment the counter.
+    - Note the spawn wall-clock time and arm the first watchdog tick immediately.
+22. Implementer commits its increment. Reply: `done` | `in progress` + HEAD + log path. Verify the frozen set (see **freeze**). Increment the counter. (Watchdog-terminated implementer → **Implementer watchdog**, not this step.)
 23. Route on the reply (check `done` first):
     - `done` → **final round**: run the review round (pre-pass → deep). Its final APPROVED → ship-gate.
     - `in progress` AND counter < 5 → loop step 21 (next increment, same log path).
     - `in progress` AND counter = 5 → **intermediate round**: run the review round. Its final APPROVED → intermediate squash, then a fresh round.
 24. Clarification-needed doc → fresh designer writes `design-delta-<N>.md` (never revises frozen `design.md`) + fresh implementer (pass design path + all delta paths; see **spec deltas**). Toolchain stop → escalate to user. Hook-failure doc (implementer stopped with work uncommitted because pre-commit hooks failed and the design declared no such intermediate state) → escalate to user; never direct any agent to commit with `--no-verify`.
+
+### Implementer watchdog
+
+Implementers overrun. Left alone they carve out too much scope and run an hour producing 2k+ lines, which is unreviewable and unsplittable after the fact. So you police every incremental implementer in flight. This is mechanical bookkeeping (`git diff --stat`, a sleep timer, `SendMessage`) — it is not an artifact read, and the traffic-cop rule does not exempt you from it.
+
+**Arm.** Every incremental spawn is `run_in_background: true` — you must stay awake to tick. Immediately after spawning, arm the first wake-up at **20 minutes** — almost nothing has gone off the rails before then. Every tick after that is ~10 minutes, re-armed until the implementer replies or you terminate it. Use whatever timer your toolset gives you; if nothing better is available, `Bash({command: "sleep 1200", run_in_background: true, description: "implementer watchdog tick 1"})` — its completion notification is your wake-up. Prefer a one-shot timer over a recurring/cron one. Nothing reaps a stray tick when the implementer returns early, so what matters is how badly one leaks: a one-shot expires on its own within the interval and costs at most a single stale notification, while a cron entry recurs until something explicitly deletes it — and the thing that would delete it is a one-shot subagent that may not get the chance.
+
+**Measure, at every tick.** Lines accumulated for *this increment* = tracked changes since the increment's start commit plus untracked files that are part of the implementation:
+
+```
+git diff --stat <HEAD at spawn>          # tracked, uncommitted
+git status --porcelain                   # then wc -l the untracked files that look like implementation
+```
+
+Untracked files: count new source/test files; do not count workflow artifacts, logs, build output, or vendored/generated trees. Workflow artifacts and docs never count toward the budget — same rule the implementer's own scope rubric uses. Sum tracked + untracked into one LoC number. Also compute elapsed wall-clock minutes since spawn.
+
+**Thresholds** (either arm of each pair trips it — LoC *or* time):
+
+- **900 LoC or 30 minutes → warn.** `SendMessage` the running implementer, roughly: *"Watchdog: you are at ~<N> LoC / <M> min. Reduce your planned scope now — find the nearest stopping point where you can commit green, ship that, and reply `in progress`. Do not start new work."* Keep ticking; a warned implementer that lands a commit and replies is a normal step-22 outcome.
+- **1200 LoC or 45 minutes → terminate.** `SendMessage`: *"Watchdog: hard stop at ~<N> LoC / <M> min. Stop immediately. Do not commit. Append a handoff to the implementation log — what you changed, where you are, what remains to make it commit-ready, in enough detail for a fresh implementer to resume cold — then return."* It stops, writes the handoff, returns with work uncommitted in the tree. (It might commit; you can't stop it, but it's authorized to not commit rather than try to get the commit green. If it does commit, salvage is not necessary.)
+
+**After a termination — the salvage spawn.** The tree is dirty and uncommitted. Spawn a fresh `implementer` mode "salvage" (background + watchdog like any other, same thresholds). Pass: design path (+ deltas), requirements path, working dir, log path, round base, the terminated increment's start commit. Its job is to get the existing work commit-ready **without taking on new scope**. Two outcomes:
+
+- `committed` + HEAD + log path → the whole thing went green. Treat as a normal increment: verify the frozen set, increment the counter, route per step 23 on its `done` / `in progress`.
+- `split` + HEAD + log path + stash ref → it could not get the whole tree green quickly, so it stashed the remainder, committed a reduced green scope, and logged both. Verify the frozen set, increment the counter. Then **you** decide what happens to the stash:
+  - **Round is ending** (that increment was the 5th, or the implementer's log says the design is otherwise complete) → leave the remainder stashed, run the review round on `round base..HEAD` as usual. After the round's squash, pop the stash and hand the remainder to the first implementer of the next round as its increment.
+  - **Round continues** → pop the stash now and hand the remainder to the next incremental spawn as its increment.
+  - Either way the stash is popped by *you* (mechanical git) before the implementer that inherits it is spawned, and you pass it the log path so it can see what the salvage spawn recorded. Never leave a stash dangling across the ship-gate.
+
+A salvage spawn that itself cannot reach a green commit even after splitting → escalate to the user. Never chase it with a third salvage spawn.
 
 A review round reviews `round base..HEAD` — only the current round's commits (prior rounds were already reviewed and squashed). Pre-pass gates the deep pass; the deep pass runs as two waves with a responder fix step after each; the judge closes the round. REWORK = one rework round.
 

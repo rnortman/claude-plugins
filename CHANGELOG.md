@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.21.0 — 2026-07-17
+
+Implementer watchdog: incremental implementers were carving out too much scope and running an hour to produce 2k+ lines — unreviewable and unsplittable after the fact. The orchestrator now polices every in-flight implementer on a self-armed timer.
+
+- **orchestrator: new "Implementer watchdog" section.** Every incremental spawn now runs `run_in_background: true` with a self-armed wake-up (first tick at 20 min, 10 min thereafter). At each tick the orchestrator measures the increment's accumulated LoC (`git diff --stat` tracked + untracked implementation files, excluding workflow artifacts and build output) and elapsed time. At **900 LoC or 20 min** it `SendMessage`s a warning to cut scope and commit at the nearest green stopping point; at **1200 LoC or 30 min** it terminates the implementer, which writes a handoff to the log and returns uncommitted. Thresholds are absolute, not a required sequence — a spawn that jumps past the hard limit between ticks is terminated without a prior warning.
+- **implementer: new "salvage" mode + watchdog-message handling.** After a termination the orchestrator spawns a fresh implementer in salvage mode to get the uncommitted tree commit-ready *without new scope*: it either commits the whole tree green (`committed`) or stashes the remainder, commits a reduced green scope, and replies `split` + stash ref. The orchestrator decides where the stashed remainder lands (review-then-next-round, or next increment) and owns the stash — never carried past the ship-gate.
+- **implementer: watchdog handoff/salvage entries are the sole exception to the "no Remaining/Next sections" log rule**, since nothing is committed and forward-looking state is the only record there is.
+- **orchestrator: matching Never bullets** — never spawn an incremental implementer unwatched, never let a terminated implementer commit or route through the normal reply step, never drop or ship a salvage stash undecided.
+
 ### 0.20.2 — 2026-07-17
 
 usage-guard bug fixes: a rate-limited poll was misreported as a broken endpoint and answered by polling *harder*, and USAGE-RESET fired before the new window would actually accept requests.
