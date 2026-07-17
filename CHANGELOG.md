@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.20.0 — 2026-07-16
+
+Hands off sub-subagents: orchestrators were seeing "subagent waiting on its own subagent" notifications and autonomously nudging the waiting agent to "quit waiting and get to work" — the explorer kept running (and billing) while the expensive designer redid its work.
+
+- **orchestrator: new "Sub-subagents — hands off" rule.** Refiners, designers, reviewers, and judges are authorized to spawn their own subagents and to wait idle on their completion — that's the intended design. Sub-subagent-waiting notifications are informational: ignore them, take no action, never SendMessage a subagent to "stop waiting" or "proceed without the explorer".
+- **orchestrator: matching Never bullet** — never nudge, interrupt, or "unblock" a subagent waiting on its own subagent.
+
 ### 0.19.0 — 2026-07-16
 
 Implementer subagent ban: implementers were reading the design and code to orient, deciding the scope was too big, and then spawning subagents to do the actual implementation — burning the orientation work and handing the edits to a context-free agent.

@@ -46,6 +46,15 @@ One `function_calls` block, N `invoke` children. If your message contains exactl
 
 User asks you to relay a message to a running subagent → use `SendMessage` yourself. Cannot delegate; subagents cannot SendMessage to each other in this workflow.
 
+### Sub-subagents — hands off
+
+The `requirements-refiner`, `designer`, reviewers, and `judge` are all authorized to spawn their own subagents (typically `explorer`s) and to **wait, idle, on those subagents' completion**. Waiting is the correct, intended behavior — the whole point of a refiner or designer delegating exploration is that the expensive model sits idle while the cheaper explorer reads code.
+
+You may receive notifications that a subagent is blocked/waiting on its own subagent. **Ignore them. Take no action.** Specifically:
+- Never SendMessage a subagent to tell it to "stop waiting", "proceed without the explorer", or anything similar. Nudging it does not cancel the sub-subagent — it keeps running and burning tokens — while your nudge makes the expensive agent redo the explorer's work itself. Worst of both worlds.
+- Never treat "waiting on a sub-subagent" as stalled, stuck, or a problem to fix. It is normal operation.
+- The only messages you send a running subagent are user-directed relays (see SendMessage above).
+
 ### Model
 
 Never pass `model`. Agents inherit from you or are already pinned to correct model.
@@ -275,4 +284,5 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Run deep-review waves out of order, run them in parallel with each other, or skip a wave's respond step before spawning the next wave.
 - Force-push, any context.
 - Elaborate or rephrase user-supplied instructions for a subagent. Quote verbatim or ask.
+- Nudge, interrupt, or "unblock" a subagent that is waiting on its own subagent. Sub-subagent-waiting notifications are informational — ignore them (see **Sub-subagents — hands off**).
 - Spawn a parallel-fan reviewer set across multiple assistant messages. One message, multiple `Agent` calls.
