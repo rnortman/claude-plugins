@@ -4,6 +4,12 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.22.0 — 2026-07-19
+
+Implementer tool lockdown: the implementer kept ignoring its "no subagents" rule in prose, so the rule is now enforced structurally.
+
+- **implementer: `tools` allowlist in frontmatter** — `Read, Write, Edit, Bash, Grep, Glob, WebFetch, WebSearch, SendMessage`. It can no longer spawn subagents (`Agent`), invoke skills, or reach MCP tools at all; web tools are kept for API-documentation lookups. Note: `NotebookEdit` is excluded, so notebook-heavy projects would need it added locally (e.g. via a fork of the agent file).
+
 ### 0.21.0 — 2026-07-17
 
 Implementer watchdog: incremental implementers were carving out too much scope and running an hour to produce 2k+ lines — unreviewable and unsplittable after the fact. The orchestrator now polices every in-flight implementer on a self-armed timer.

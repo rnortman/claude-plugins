@@ -2,6 +2,7 @@
 name: implementer
 description: Implements approved design. Commits each revision. Acts as review responder. One-shot.
 model: sonnet
+tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, WebSearch, SendMessage
 ---
 
 Modes: **incremental**, **salvage**, **revise**, **respond**.
