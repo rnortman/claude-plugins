@@ -4,7 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
-### 0.22.0 — 2026-07-19
+### 0.23.0 — 2026-07-21
+
+New dedicated comment reviewer in pre-pass: the slop and citizen comment rubrics weren't catching enough, so comment quality now gets its own reviewer with a full standard baked in.
+
+- **New agent: `comment-reviewer`** (pinned Sonnet; re-pin via `/configure-models` if needed). Runs in pre-pass, in parallel with the prepass-reviewer, over the round diff's added/modified comments. Encodes a nine-rule comment standard, each rule with a near-mechanical test: no references to ephemeral/out-of-tree docs; no narration (the delete test); no descriptions of remote implementation (restate as local obligation, document the contract where it lives, promote to types, or coupling-with-a-tripwire); contract doc comments on public items (what it guarantees, not how it works); invariant/assumption comments encouraged; why-comments self-contained; how-comments only for the irreducible; no commented-out code or slugless TODOs; generic identities (`alice`, `example.com`) in examples and tests. Default disposition is delete — a comment must say something the code cannot say. Pre-existing bad comments in surrounding code never authorize new ones. Findings use a new `comment-` category; notes land in `notes-prepass-comment-r<R>.md`.
+- **orchestrator: pre-pass spawns both reviewers in parallel**; the responder and pre-pass judge receive both notes paths.
+- **prepass-reviewer: slop lane no longer covers comments** — it keeps non-comment LLM tells (task-narrating names, placeholder residue), unhandled cases, and workarounds, and defers comment quality to the comment-reviewer.
+- **citizen-reviewer: comment-hygiene rubric item removed** — owned by the comment-reviewer in pre-pass.
+- **judge: comment-standard adjudication updated** — a `comment-` Won't-Do can't rest on "no such rule", "harmless", or "matches the file's style"; it holds only by showing the reviewer misapplied the rule's own test.
 
 Implementer tool lockdown: the implementer kept ignoring its "no subagents" rule in prose, so the rule is now enforced structurally.
 

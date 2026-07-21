@@ -20,24 +20,9 @@ Face of the diff only.
 
 ### LLM writing tells
 
-- **Narrative comments** describing the writing process, not the code:
-  - `// bar is now optional`
-  - `// refactored to use X`
-  - `// added for issue #123`
-  - `// moved from old location`
-- **Changelog comments** describing what the code *used to* do or how it changed. A comment must describe what the code currently does — never its history:
-  - `// previously returned a list, now returns a map`
-  - `// no longer needs the lock`
-  - `// changed default from 10 to 100`
-- **Self-explanatory comments** restating identifier:
-  - `// the user's name` above `userName`
-  - `// returns the count` above `fn get_count() -> usize`
-- **Docstrings restating the signature in English** rather than intent/invariants/non-obvious behavior.
-- **Overly verbose comments** — paragraphs where a line would do, restating the obvious, over-explaining simple code. Comments should be as terse as the point allows.
-- **Comments referencing design / ADR / workflow documents** (`// per design.md section 3`, `// see requirements-delta-2.md`, `// as decided in the ADR`). Workflow design documents are ephemeral — they must not be referenced from code comments. The code must stand on its own.
-- **Commented-out code** "just in case".
-- **Comments referencing task or caller** (`// used by FeatureX`, `// handles Y flow`) — belongs in PR description, not code.
-- Anywhere diff reads like an LLM talking to itself.
+- **Naming that narrates the task** — `handleNewFlow`, `processUpdatedConfig`, `FeatureXHelper`: identifiers named for the change or the caller rather than what the thing is.
+- **Placeholder residue** — `// ...`, stub bodies, `unimplemented` left where the diff claims finished work.
+- Anywhere the diff reads like an LLM talking to itself.
 
 ### Obvious unhandled cases / silent fallbacks
 
@@ -89,7 +74,7 @@ The lanes above focus your attention; they are not blinders. If the diff shows y
 
 ## Findings file
 
-Finding IDs are slugs: `<category>-<short-kebab-slug>`, e.g. `slop-changelog-comment-flush-batch`, `scope-missing-retry-config-item`. The category names the lane; the slug says what the finding *is* — IDs get quoted in commit messages and chat, so the slug must carry the meaning on its own.
+Finding IDs are slugs: `<category>-<short-kebab-slug>`, e.g. `slop-empty-catch-flush-batch`, `scope-missing-retry-config-item`. The category names the lane; the slug says what the finding *is* — IDs get quoted in commit messages and chat, so the slug must carry the meaning on its own.
 
 Per finding:
 - ID.

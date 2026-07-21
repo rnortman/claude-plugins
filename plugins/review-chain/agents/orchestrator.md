@@ -14,7 +14,7 @@ Implementation runs as incremental rounds: fresh `implementer` "incremental" spa
 
 Review chains:
 - **Requirements/design review:** single reviewer → responder → judge.
-- **Pre-pass:** `prepass-reviewer` (slop + scope) → responder → judge.
+- **Pre-pass:** `prepass-reviewer` (slop + scope) + `comment-reviewer` (comment standard) in parallel → responder → judge.
 - **Deep review:** two waves — wave 1 `citizen-reviewer` → responder fixes; wave 2 `tracer-reviewer` + `test-reviewer` in parallel over the cumulative diff (wave-1 fixes included) → responder fixes → judge (adjudicates both waves' dispositions + scans the unreviewed respond commits).
 
 Every chain: judge REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE.
@@ -82,7 +82,7 @@ If the project has a documentation standard (e.g., ADR dirs), follow that standa
 Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md` (the four spec docs — edited in place only while drafted/revised pre-freeze, then frozen), `implementation-log.md` (append-only across all increments and rounds — the implementation record). Post-freeze spec revisions: `requirements-delta-<N>.md`, `design-delta-<N>.md`, `design-eli5-delta-<N>.md` (see **freeze**).
 
 **Review artifacts are the workflow's audit trail — never overwritten** (see **Audit trail** in Principles). Every review round, wave, and rework attempt writes its own durably-numbered file. Three ordinals: **round `R`** (per phase — the review pass for requirements/design, the implementation round for prepass/deep; prepass and deep of the same round share one `R`), **wave `W`** (deep review only; 1 = citizen, 2 = tracer + test), and **rework attempt `A`** (1 = initial, 2 = the one rework round). `<phase>` ∈ {`requirements`, `design`, `prepass`, `deep`}.
-- Reviewer notes: `notes-<phase>-<reviewer>-r<R>.md` (prepass has one reviewer: `notes-prepass-r<R>.md`) — reviewers run once per round, so no `A`.
+- Reviewer notes: `notes-<phase>-<reviewer>-r<R>.md` (prepass exceptions: `notes-prepass-r<R>.md` for the prepass-reviewer, `notes-prepass-comment-r<R>.md` for the comment-reviewer) — reviewers run once per round, so no `A`.
 - Dispositions: `dispositions-<phase>-r<R>-a<A>.md`; deep initial pass is per-wave: `dispositions-deep-r<R>-w<W>-a1.md`; the deep rework doc spans waves: `dispositions-deep-r<R>-a2.md`.
 - Judge verdict: `judge-verdict-<phase>-r<R>-a<A>.md` (a judge ESCALATE *is* this file — there is no separate judge escalation doc).
 - Escalation self-written by a responder/reviewer: `escalation-prepass-r<R>.md` (prepass reviewer), `escalation-<phase>-respond-r<R>[-w<W>]-a<A>.md`.
@@ -211,11 +211,13 @@ A salvage spawn that itself cannot reach a green commit even after splitting →
 A review round reviews `round base..HEAD` — only the current round's commits (prior rounds were already reviewed and squashed). Pre-pass gates the deep pass; the deep pass runs as two waves with a responder fix step after each; the judge closes the round. REWORK = one rework round.
 
 ### pre-pass review
-25. Spawn `prepass-reviewer`. Pass: round base, HEAD, design path (+ delta paths), log path, **round type (intermediate | final)**, target `notes-prepass-r<R>.md`, escalation target `escalation-prepass-r<R>.md`. Intermediate round → it checks this round's log-claimed slice; final round → it also checks the whole design is accounted for in the full log. Either way it also checks every log claim traces to the effective design (design + deltas).
-    - Reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't spawn the responder. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
-26. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, notes path, target `dispositions-prepass-r<R>-a1.md`, escalation target `escalation-prepass-respond-r<R>-a1.md`.
+25. **One assistant message, both `Agent` calls in parallel:** `prepass-reviewer` and `comment-reviewer`.
+    - `prepass-reviewer` — pass: round base, HEAD, design path (+ delta paths), log path, **round type (intermediate | final)**, target `notes-prepass-r<R>.md`, escalation target `escalation-prepass-r<R>.md`. Intermediate round → it checks this round's log-claimed slice; final round → it also checks the whole design is accounted for in the full log. Either way it also checks every log claim traces to the effective design (design + deltas).
+    - `comment-reviewer` — pass: round base, HEAD, working dir, target `notes-prepass-comment-r<R>.md`. No design path — comments must stand on their own.
+    - Prepass-reviewer reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't spawn the responder. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
+26. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, both notes paths, target `dispositions-prepass-r<R>-a1.md`, escalation target `escalation-prepass-respond-r<R>-a1.md`.
     - Implementer reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't proceed to judge or deep review. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
-27. Spawn `judge` round 1. Pass: notes path, dispositions path, working dir, round base, HEAD, design path, target `judge-verdict-prepass-r<R>-a1.md`.
+27. Spawn `judge` round 1. Pass: both notes paths, dispositions path, working dir, round base, HEAD, design path, target `judge-verdict-prepass-r<R>-a1.md`.
 28. REWORK → fresh implementer respond rework (target `dispositions-prepass-r<R>-a2.md`, escalation target `escalation-prepass-respond-r<R>-a2.md`) + fresh judge round 2 (target `judge-verdict-prepass-r<R>-a2.md`).
 29. APPROVED → deep. ESCALATE → surface.
 
