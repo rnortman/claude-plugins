@@ -12,9 +12,11 @@ All agents one-shot — spawn fresh, get reply, drop.
 
 Implementation runs as incremental rounds: fresh `implementer` "incremental" spawns, one increment each, grouped into rounds of up to 5. A review round (pre-pass + deep) fires when the implementer replies `done` **or** the round hits its 5th increment. An intermediate round (5-cap, still `in progress`) that passes the final judge is squashed silently — no user gate — and that squash becomes the next round's review base. Only the **final** round (the one an implementer ended with `done`) reaches the human ship-gate.
 
+After **every** implementer commit — increment, salvage, or review-respond, in any phase — a fresh `comment-rewriter` sweeps that commit's comments to the comment standard and commits the result (see **comment sweep**). It is not a reviewer and joins no review chain.
+
 Review chains:
 - **Requirements/design review:** single reviewer → responder → judge.
-- **Pre-pass:** `prepass-reviewer` (slop + scope) + `comment-reviewer` (comment standard) in parallel → responder → judge.
+- **Pre-pass:** `prepass-reviewer` (slop + scope) → responder → judge.
 - **Deep review:** two waves — wave 1 `citizen-reviewer` → responder fixes; wave 2 `tracer-reviewer` + `test-reviewer` in parallel over the cumulative diff (wave-1 fixes included) → responder fixes → judge (adjudicates both waves' dispositions + scans the unreviewed respond commits).
 
 Every chain: judge REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE.
@@ -82,7 +84,7 @@ If the project has a documentation standard (e.g., ADR dirs), follow that standa
 Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md` (the four spec docs — edited in place only while drafted/revised pre-freeze, then frozen), `implementation-log.md` (append-only across all increments and rounds — the implementation record). Post-freeze spec revisions: `requirements-delta-<N>.md`, `design-delta-<N>.md`, `design-eli5-delta-<N>.md` (see **freeze**).
 
 **Review artifacts are the workflow's audit trail — never overwritten** (see **Audit trail** in Principles). Every review round, wave, and rework attempt writes its own durably-numbered file. Three ordinals: **round `R`** (per phase — the review pass for requirements/design, the implementation round for prepass/deep; prepass and deep of the same round share one `R`), **wave `W`** (deep review only; 1 = citizen, 2 = tracer + test), and **rework attempt `A`** (1 = initial, 2 = the one rework round). `<phase>` ∈ {`requirements`, `design`, `prepass`, `deep`}.
-- Reviewer notes: `notes-<phase>-<reviewer>-r<R>.md` (prepass exceptions: `notes-prepass-r<R>.md` for the prepass-reviewer, `notes-prepass-comment-r<R>.md` for the comment-reviewer) — reviewers run once per round, so no `A`.
+- Reviewer notes: `notes-<phase>-<reviewer>-r<R>.md` (prepass exception: `notes-prepass-r<R>.md` for the prepass-reviewer) — reviewers run once per round, so no `A`.
 - Dispositions: `dispositions-<phase>-r<R>-a<A>.md`; deep initial pass is per-wave: `dispositions-deep-r<R>-w<W>-a1.md`; the deep rework doc spans waves: `dispositions-deep-r<R>-a2.md`.
 - Judge verdict: `judge-verdict-<phase>-r<R>-a<A>.md` (a judge ESCALATE *is* this file — there is no separate judge escalation doc).
 - Escalation self-written by a responder/reviewer: `escalation-prepass-r<R>.md` (prepass reviewer), `escalation-<phase>-respond-r<R>[-w<W>]-a<A>.md`.
@@ -171,7 +173,7 @@ Log path: `implementation-log.md` (append-only across all rounds). Track a **rou
 21. Spawn fresh `implementer` mode "incremental", **always with `run_in_background: true`** (see **Implementer watchdog** — you must stay awake to police its scope). Pass: design path (+ any delta paths), requirements path, working dir, log path, round base, current HEAD.
     - **End every incremental spawn prompt with this line, verbatim, as the last thing in the prompt** (recency reinforcement against the orient-before-deciding instinct; an exception to "no rubric restating"): `First two tool calls: parallel Read of input docs, then single Edit appending draft scope to log. No source reads, Grep, ls, or Bash before the log Edit.`
     - Note the spawn wall-clock time and arm the first watchdog tick immediately.
-22. Implementer commits its increment. Reply: `done` | `in progress` + HEAD + log path. Verify the frozen set (see **freeze**). Increment the counter. (Watchdog-terminated implementer → **Implementer watchdog**, not this step.)
+22. Implementer commits its increment. Reply: `done` | `in progress` + HEAD + log path. Verify the frozen set (see **freeze**). Run the **comment sweep**. Increment the counter. (Watchdog-terminated implementer → **Implementer watchdog**, not this step.)
 23. Route on the reply (check `done` first):
     - `done` → **final round**: run the review round (pre-pass → deep). Its final APPROVED → ship-gate.
     - `in progress` AND counter < 5 → loop step 21 (next increment, same log path).
@@ -200,8 +202,8 @@ Untracked files: count new source/test files; do not count workflow artifacts, l
 
 **After a termination — the salvage spawn.** The tree is dirty and uncommitted. Spawn a fresh `implementer` mode "salvage" (background + watchdog like any other, same thresholds). Pass: design path (+ deltas), requirements path, working dir, log path, round base, the terminated increment's start commit. Its job is to get the existing work commit-ready **without taking on new scope**. Two outcomes:
 
-- `committed` + HEAD + log path → the whole thing went green. Treat as a normal increment: verify the frozen set, increment the counter, route per step 23 on its `done` / `in progress`.
-- `split` + HEAD + log path + stash ref → it could not get the whole tree green quickly, so it stashed the remainder, committed a reduced green scope, and logged both. Verify the frozen set, increment the counter. Then **you** decide what happens to the stash:
+- `committed` + HEAD + log path → the whole thing went green. Treat as a normal increment: verify the frozen set, run the comment sweep, increment the counter, route per step 23 on its `done` / `in progress`.
+- `split` + HEAD + log path + stash ref → it could not get the whole tree green quickly, so it stashed the remainder, committed a reduced green scope, and logged both. Verify the frozen set, run the comment sweep, increment the counter. Then **you** decide what happens to the stash:
   - **Round is ending** (that increment was the 5th, or the implementer's log says the design is otherwise complete) → leave the remainder stashed, run the review round on `round base..HEAD` as usual. After the round's squash, pop the stash and hand the remainder to the first implementer of the next round as its increment.
   - **Round continues** → pop the stash now and hand the remainder to the next incremental spawn as its increment.
   - Either way the stash is popped by *you* (mechanical git) before the implementer that inherits it is spawned, and you pass it the log path so it can see what the salvage spawn recorded. Never leave a stash dangling across the ship-gate.
@@ -210,24 +212,26 @@ A salvage spawn that itself cannot reach a green commit even after splitting →
 
 A review round reviews `round base..HEAD` — only the current round's commits (prior rounds were already reviewed and squashed). Pre-pass gates the deep pass; the deep pass runs as two waves with a responder fix step after each; the judge closes the round. REWORK = one rework round.
 
+### comment sweep — after every implementer commit
+
+Any implementer spawn that lands commits — an increment, a salvage (`committed` or `split`), any respond mode, a ship-gate revision — is followed immediately by a fresh `comment-rewriter`, before whatever comes next (next increment, reviewer spawn, judge, gate). It is not a reviewer: it edits the new commits' comments to the comment standard directly and commits the result — no notes file, no responder, no judge round, no watchdog (it runs foreground). Pass: sweep base (the HEAD the implementer started from), current HEAD, working dir. No design path — comments must stand on their own. Reply: `swept` + new HEAD, or `no changes`. After a sweep commit, verify the frozen set (see **freeze**); the sweep HEAD is the current HEAD for everything downstream. Skip only when the implementer committed nothing (clarification-needed, escalation, watchdog termination pre-salvage). No-VCS → it sweeps the working tree, no commit.
+
 ### pre-pass review
-25. **One assistant message, both `Agent` calls in parallel:** `prepass-reviewer` and `comment-reviewer`.
-    - `prepass-reviewer` — pass: round base, HEAD, design path (+ delta paths), log path, **round type (intermediate | final)**, target `notes-prepass-r<R>.md`, escalation target `escalation-prepass-r<R>.md`. Intermediate round → it checks this round's log-claimed slice; final round → it also checks the whole design is accounted for in the full log. Either way it also checks every log claim traces to the effective design (design + deltas).
-    - `comment-reviewer` — pass: round base, HEAD, working dir, target `notes-prepass-comment-r<R>.md`. No design path — comments must stand on their own.
-    - Prepass-reviewer reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't spawn the responder. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
-26. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, both notes paths, target `dispositions-prepass-r<R>-a1.md`, escalation target `escalation-prepass-respond-r<R>-a1.md`.
+25. Spawn `prepass-reviewer`. Pass: round base, HEAD, design path (+ delta paths), log path, **round type (intermediate | final)**, target `notes-prepass-r<R>.md`, escalation target `escalation-prepass-r<R>.md`. Intermediate round → it checks this round's log-claimed slice; final round → it also checks the whole design is accounted for in the full log. Either way it also checks every log claim traces to the effective design (design + deltas).
+    - Reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't spawn the responder. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
+26. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, notes path, target `dispositions-prepass-r<R>-a1.md`, escalation target `escalation-prepass-respond-r<R>-a1.md`.
     - Implementer reply `ESCALATE` + escalation path → STOP. Surface escalation path. Don't proceed to judge or deep review. Resume only on user direction (typically: re-enter incremental, or revise design then re-implement).
-27. Spawn `judge` round 1. Pass: both notes paths, dispositions path, working dir, round base, HEAD, design path, target `judge-verdict-prepass-r<R>-a1.md`.
+27. Spawn `judge` round 1. Pass: notes path, dispositions path, working dir, round base, HEAD, design path, target `judge-verdict-prepass-r<R>-a1.md`.
 28. REWORK → fresh implementer respond rework (target `dispositions-prepass-r<R>-a2.md`, escalation target `escalation-prepass-respond-r<R>-a2.md`) + fresh judge round 2 (target `judge-verdict-prepass-r<R>-a2.md`).
 29. APPROVED → deep. ESCALATE → surface.
 
 ### deep review (two waves)
 30. **Wave 1 — citizen.** Spawn `citizen-reviewer`. Pass: round base, HEAD, design path (+ delta paths), target `notes-deep-citizen-r<R>.md`.
-31. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, citizen notes path, target `dispositions-deep-r<R>-w1-a1.md`, escalation target `escalation-deep-respond-r<R>-w1-a1.md`. Implementer fact-checks, fixes, commits → new HEAD.
+31. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, citizen notes path, target `dispositions-deep-r<R>-w1-a1.md`, escalation target `escalation-deep-respond-r<R>-w1-a1.md`. Implementer fact-checks, fixes, commits → new HEAD. Comment sweep follows — wave 2 reviews the swept HEAD.
 32. **Wave 2 — tracer + test.** **One assistant message, both `Agent` calls in parallel:** `tracer-reviewer` and `test-reviewer`. Each: round base, current HEAD, design path (+ delta paths), target `notes-deep-tracer-r<R>.md` / `notes-deep-test-r<R>.md`. They review the cumulative round diff — wave-1 fixes included, which is how wave-1's fixes get reviewed. Record the HEAD they reviewed as **reviewed HEAD**.
-33. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, both wave-2 notes paths, target `dispositions-deep-r<R>-w2-a1.md`, escalation target `escalation-deep-respond-r<R>-w2-a1.md`. Implementer fixes, commits → new HEAD.
+33. Spawn `implementer` mode "respond, round 1". Pass: design path, working dir, round base, HEAD, both wave-2 notes paths, target `dispositions-deep-r<R>-w2-a1.md`, escalation target `escalation-deep-respond-r<R>-w2-a1.md`. Implementer fixes, commits → new HEAD. Comment sweep follows.
     - Any respond-mode `ESCALATE` reply (either wave) → STOP. Surface escalation path. Resume only on user direction.
-34. Spawn `judge` round 1. Pass: all three notes paths, both dispositions paths (w1 + w2), working dir, round base, HEAD, **reviewed HEAD**, design path (+ delta paths), target `judge-verdict-deep-r<R>-a1.md`. The judge walks every added TODO in the round diff, adjudicates both waves' dispositions, and scans `reviewed HEAD..HEAD` — the wave-2 respond commits no reviewer saw — for unfinished fixes and new breakage.
+34. Spawn `judge` round 1. Pass: all three notes paths, both dispositions paths (w1 + w2), working dir, round base, HEAD, **reviewed HEAD**, design path (+ delta paths), target `judge-verdict-deep-r<R>-a1.md`. The judge walks every added TODO in the round diff, adjudicates both waves' dispositions, and scans `reviewed HEAD..HEAD` — the wave-2 respond commits no reviewer saw — for unfinished fixes and new breakage. (That range includes comment-sweep commits — comment-only, expected.)
 35. REWORK → fresh implementer respond rework covering the verdict's disputed items from both waves (target `dispositions-deep-r<R>-a2.md`, escalation target `escalation-deep-respond-r<R>-a2.md`) + fresh judge round 2 (same reviewed HEAD; target `judge-verdict-deep-r<R>-a2.md`).
 36. APPROVED → a **final round** goes to ship-gate; an **intermediate round** goes to intermediate squash. ESCALATE → surface.
 
@@ -243,7 +247,7 @@ No-VCS working dir has no commits to squash: run each round's review on the work
 40. User approves squash → you squash to the **original base** with a clean message (mechanical git), folding every round + the freeze commit into one commit.
 41. Push: separate, explicit user authorization for named repo + branch. "Approved squash" ≠ "approve push".
 
-Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user-<K>.md` verbatim, `K` = 1, 2, … per revision batch — never reuse a prior file): if the revision changes the design or requirements (not just code), first capture it as a delta doc (fresh designer → `design-delta-<N>.md` / fresh refiner → `requirements-delta-<N>.md`; frozen docs never edited) before the implementer; code-only changes go straight to the implementer. Each revision cycle bumps `R` (a new review pass — its dispositions/verdict/notes use the new `R`). Then: fresh implementer respond + commit → re-check the frozen set → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path + delta paths to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
+Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user-<K>.md` verbatim, `K` = 1, 2, … per revision batch — never reuse a prior file): if the revision changes the design or requirements (not just code), first capture it as a delta doc (fresh designer → `design-delta-<N>.md` / fresh refiner → `requirements-delta-<N>.md`; frozen docs never edited) before the implementer; code-only changes go straight to the implementer. Each revision cycle bumps `R` (a new review pass — its dispositions/verdict/notes use the new `R`). Then: fresh implementer respond + commit → re-check the frozen set → comment sweep → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path + delta paths to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
 
 ### todo burndown (alternate entry)
 
@@ -291,6 +295,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Never pass `model` (inherit / agent-pinned). Sole exception: user-requested Opus on the implementer.
 - All agents one-shot.
 - Implementation is incremental only — there is no single-shot mode. Increments run in rounds of up to 5; a review round fires at the 5th increment or when the implementer replies `done`.
+- Comment standard is enforced by direct rewrite, not findings: a fresh `comment-rewriter` follows every implementer commit, edits comments only, and lands its own commit.
 - Deep review is sequential waves, not one parallel fan: citizen first (structural findings reshape code), then tracer + test over the near-final code including wave-1 fixes; the judge scans whatever the last respond left unreviewed. Waves are blind to each other's notes.
 - Spec freeze: at implementation start, `exploration.md` / `requirements.md` / `design.md` / `design-eli5.md` are committed (or checksummed) and frozen. Post-freeze they are immutable — revisions go in new `*-delta-<N>.md` docs that reference the originals and record only the delta; effective spec = original + deltas. Re-verify the frozen set is unchanged after every implementer commit and after each intermediate squash; a modified frozen doc halts the workflow.
 - Every implementer increment/revision = a commit. Intermediate-round squashes (between review rounds) are automatic internal checkpoints — no user gate. The ship-squash (final round, to the original base) happens only after user approval.
@@ -315,6 +320,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Ship-squash (final round, to the original base) or push without explicit user approval (separately). Intermediate-round squashes are automatic and need no approval.
 - Route a `done` round anywhere but the human ship-gate, or send an intermediate round to a user gate.
 - Run deep-review waves out of order, run them in parallel with each other, or skip a wave's respond step before spawning the next wave.
+- Skip the comment sweep after an implementer commit, or route the `comment-rewriter` through a responder/judge chain — it edits directly.
 - Force-push, any context.
 - Elaborate or rephrase user-supplied instructions for a subagent. Quote verbatim or ask.
 - Nudge, interrupt, or "unblock" a subagent that is waiting on its own subagent. Sub-subagent-waiting notifications are informational — ignore them (see **Sub-subagents — hands off**).

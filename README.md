@@ -14,7 +14,7 @@ There's some [anecdotal usage data](docs/usage-analysis/README.md) gathered usin
 
 ## Plugins
 
-- **[review-chain](plugins/review-chain/)** — Orchestrator-driven workflow with adversarial review chains. A thin pre-pass (slop + scope, plus a comment-standard reviewer in parallel) gates a deep pass that runs in sequential waves — citizen (quality, reuse, efficiency), then tracer (correctness, error handling, security) + test over the code including the first wave's fixes; a responder fact-checks and fixes after every wave; a judge adjudicates dispositions and scans the fixes no reviewer saw. Requirements and design each get an adversarial review with the same review → respond → adjudicate pattern before the corresponding user gate. All agents are one-shot, file-based, and token-frugal — the orchestrator consumes only short summaries and paths.
+- **[review-chain](plugins/review-chain/)** — Orchestrator-driven workflow with adversarial review chains. Every implementer commit is immediately followed by a comment-rewriter that edits the new comments to a nine-rule standard directly and commits. A thin pre-pass (slop + scope) gates a deep pass that runs in sequential waves — citizen (quality, reuse, efficiency), then tracer (correctness, error handling, security) + test over the code including the first wave's fixes; a responder fact-checks and fixes after every wave; a judge adjudicates dispositions and scans the fixes no reviewer saw. Requirements and design each get an adversarial review with the same review → respond → adjudicate pattern before the corresponding user gate. All agents are one-shot, file-based, and token-frugal — the orchestrator consumes only short summaries and paths.
 - **[setup-project](plugins/setup-project/)** — Optional bootstrap that wires the orchestrator as the default agent, adds a generic Working-With-Claude-Code section to `CLAUDE.md`, and installs a `TODO.md` + `TODO(slug)` tracking convention. Take it or leave it — `review-chain` works without it.
 
 ## How review-chain works
@@ -29,7 +29,8 @@ flowchart TD
     rrev -. user gate .-> d[designer drafts]
     d --> dr[[Design Review<br/>design-reviewer]]
     dr -. user gate .-> impl[implementer commits]
-    impl --> pp[[Pre-pass Review · parallel<br/>prepass-reviewer: slop + scope<br/>comment-reviewer: comment standard]]
+    impl --> cw[comment-rewriter<br/>edits comments, commits]
+    cw --> pp[[Pre-pass Review<br/>prepass-reviewer: slop + scope]]
     pp --> w1[[Deep Wave 1<br/>citizen: quality, reuse, efficiency]]
     w1 --> fix1[implementer fixes]
     fix1 --> w2[[Deep Wave 2 · parallel<br/>tracer: correctness, error handling, security<br/>test: presence + quality]]
@@ -88,11 +89,10 @@ flowchart LR
 
     dGate[/user gate/] --> impl[implementer commits]
 
-    impl --> pre[prepass-reviewer<br/>slop + scope]
-    impl --> cm[comment-reviewer<br/>comment standard]
+    impl --> cw[comment-rewriter<br/>edits comments, commits]
+    cw --> pre[prepass-reviewer<br/>slop + scope]
     pre -. mid-phase ESCALATE .-> esc
     pre --> pResp[implementer responds]
-    cm --> pResp
     pResp --> pJ{judge}
     pJ -. REWORK .-> pResp2[fresh implementer]
     pResp2 --> pJ2{fresh judge}

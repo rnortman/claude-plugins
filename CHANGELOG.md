@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.24.0 — 2026-07-22
+
+Comment reviewer → comment rewriter: the finding→respond→judge loop was too weak for comment quality, so comments are now fixed by direct edit. A rewriter sweeps every implementer commit — initial increments and review-respond fixes alike — instead of reviewing once per round in pre-pass.
+
+- **New agent: `comment-rewriter`** (replaces `comment-reviewer`; pinned `claude-opus-4-6[1M]`). Not a reviewer: it writes no findings and joins no review chain. It rewrites the swept commit's added/modified comments to the same nine-rule standard, polishes the tone of survivors, and lands its own commit (never amending the implementer's). Comments only — it never checks code correctness, and touches code solely for reformatting forced by comment edits. It focuses on the sweep diff but may fix bad pre-existing comments it happens upon nearby (never hunting), and reads remote code or the exploration only when a comment references a remote item and a rule's test requires resolving the referent. Rules needing code changes were adapted: Rule 3 drops the promote-to-types option (rewrite as a local obligation, or move the contract to the remote item's doc comment — an authorized out-of-diff comment edit); Rule 4 has it write missing doc-comment contracts itself; slugless TODOs with clear intent get slugged and tracked, contentless ones deleted. Out-of-scope discoveries (a comment admitting a bug, a real identity in a fixture) get a reply line, not an edit.
+- **orchestrator: new "comment sweep" step after every implementer commit** — increment, salvage, respond mode, or ship-gate revision, in every phase. The sweep runs before whatever comes next; the frozen-set check repeats after its commit and its HEAD becomes the current HEAD downstream. Wave 2 reviews the swept HEAD after the wave-1 respond, and the deep judge is told sweep commits are expected inside `reviewed HEAD..HEAD`.
+- **orchestrator: pre-pass is the single `prepass-reviewer` again** — the parallel comment-reviewer spawn, its `notes-prepass-comment-r<R>.md` file, and the both-notes-paths plumbing are removed.
+- **judge: sweep commits expected in the unreviewed-range scan** (comment-only; flagged only if one changed code behavior), and the comment-standard severity bullet now names the rewriter — out-of-lane `comment-` findings from other reviewers remain adjudicable.
+
 ### 0.23.0 — 2026-07-21
 
 New dedicated comment reviewer in pre-pass: the slop and citizen comment rubrics weren't catching enough, so comment quality now gets its own reviewer with a full standard baked in.
