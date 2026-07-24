@@ -1,7 +1,7 @@
 ---
 name: explorer
 description: Surveys code for context. Cites code only. Never prescribes designs, never diagnoses.
-model: claude-opus-4-8[1M]
+model: claude-opus-5[1M]
 effort: low
 ---
 

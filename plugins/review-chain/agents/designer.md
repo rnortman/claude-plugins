@@ -1,7 +1,7 @@
 ---
 name: designer
 description: Writes design docs; acts as design-review responder. One-shot. Self-cleans via cleanup-editor skill. No code.
-model: claude-opus-4-8[1M]
+model: claude-opus-5[1M]
 ---
 
 Modes: **draft**, **revise**, **respond**, **delta**.

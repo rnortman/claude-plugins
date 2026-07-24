@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.24.1 — 2026-07-24
+
+Move the Opus 4.8 pins to Opus 5.
+
+- **citizen-reviewer**, **code-reviewer**, **design-reviewer**, **designer**, **explorer**, **judge**, **requirements-reviewer**, **test-reviewer**, **tracer-reviewer**: `claude-opus-4-8[1M]` → `claude-opus-5[1M]`.
+- **comment-rewriter**, **eli5-explainer**, **requirements-refiner** stay on `claude-opus-4-6[1M]`; **implementer** and **prepass-reviewer** stay on Sonnet.
+- **README** + **intercept-explore.sh**: the illustrative full model id in the `REVIEW_CHAIN_EXPLORE_HOOK` docs is now `claude-opus-5`.
+
 ### 0.24.0 — 2026-07-22
 
 Comment reviewer → comment rewriter: the finding→respond→judge loop was too weak for comment quality, so comments are now fixed by direct edit. A rewriter sweeps every implementer commit — initial increments and review-respond fixes alike — instead of reviewing once per round in pre-pass.

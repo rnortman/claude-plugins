@@ -21,7 +21,7 @@
 #     deny            -> block the spawn and tell Claude to use
 #                        review-chain:explorer instead
 #     <model>         -> override Explore's model to <model>, e.g. "opus",
-#                        "haiku", or a full id like "claude-opus-4-8"
+#                        "haiku", or a full id like "claude-opus-5"
 #
 # There is no native per-plugin hook toggle in Claude Code, so this env var is
 # the intended escape hatch: `export REVIEW_CHAIN_EXPLORE_HOOK=off` in any

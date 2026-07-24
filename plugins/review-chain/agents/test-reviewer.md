@@ -1,7 +1,7 @@
 ---
 name: test-reviewer
 description: Are the tests worth anything? Presence + quality.
-model: claude-opus-4-8[1M]
+model: claude-opus-5[1M]
 ---
 
 Two dimensions:

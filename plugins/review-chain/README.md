@@ -74,7 +74,7 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
   | *(unset)* | **Default.** Silently override `Explore`'s model to `sonnet`. |
   | `off` (also `0`, `false`, `disable`, `none`) | Do nothing — the built-in `Explore` runs as-is (Haiku). |
   | `deny` | Block the spawn and tell Claude to use `review-chain:explorer` instead. |
-  | *a model* (e.g. `opus`, `haiku`, `claude-opus-4-8`) | Override `Explore`'s model to that model. |
+  | *a model* (e.g. `opus`, `haiku`, `claude-opus-5`) | Override `Explore`'s model to that model. |
 
   Set it in any shell or project where you want different behavior, e.g. `export REVIEW_CHAIN_EXPLORE_HOOK=off`. The hook fails open: if `jq` is missing or the input can't be parsed, it does nothing and the spawn proceeds unmodified.
 
