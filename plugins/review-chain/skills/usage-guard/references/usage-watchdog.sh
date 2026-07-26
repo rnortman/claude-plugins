@@ -100,6 +100,17 @@ to_epoch() {
   echo "$e"
 }
 
+# Epoch -> local-time display, falling back to the raw ISO if the epoch is unknown.
+# Alarm lines quote a reset time the session turns into a cron wakeup, and cron
+# schedules are local — handing it UTC invites an off-by-a-timezone wakeup.
+fmt_local() {
+  local e="$1" raw="$2"
+  [ "$e" -gt 0 ] 2>/dev/null || { printf '%s' "$raw"; return; }
+  date -d "@$e" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null && return   # GNU/coreutils
+  date -r "$e" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null && return    # BSD/macOS
+  printf '%s' "$raw"
+}
+
 fail_count=0
 # Outage bookkeeping: when the current failure streak started, whether the session
 # has been told about it, and when it was last told (for re-notice rate-limiting).
@@ -181,6 +192,7 @@ while :; do
   [ "$util" -ge 97 ] && tier=3
 
   if [ "$tier" -gt 0 ] && [ "$util" -gt "$last_notified_util" ]; then
+    resets=$(fmt_local "$reset_epoch" "$resets")
     case "$tier" in
       1) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). Set a cron wakeup for after reset NOW as insurance; keep working; prefer serial over parallel subagents." ;;
       2) echo "USAGE-${util}: 5h usage at ${util}% (resets ${resets}). ESCALATION (>=94%). If the cron wakeup is not set, set it NOW. Only launch subagent work that is strictly bounded and small." ;;

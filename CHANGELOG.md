@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.25.0 — 2026-07-26
+
+New `/usage-wall` skill: the opposite policy to `/usage-guard` for the same 5-hour window. Hitting the wall stalls in-flight subagents rather than killing them, so the wall is recoverable and defending against it is wasted budget.
+
+- **New skill: `usage-wall`** (user-invoked only, `disable-model-invocation`). No watchdog, no polling, no tiered slowdown: read the reset time once, schedule a one-shot `CronCreate` wakeup for reset + 2 minutes, then work flat out until requests start failing. On waking it confirms the window actually rolled over, resumes each stalled subagent with `SendMessage(<agent>, "Continue")` — that word alone, never a respawn, which would discard the agent's work — reschedules the next wakeup, and continues the task. Documents the cron caveats that bite here: jobs are session-only and in-memory, they fire only while the REPL is idle, and a 5-hour reset buys nothing when the exhausted window is the 7-day one or a model-scoped weekly cap. It shares `usage-guard`'s `references/usage-check.sh` rather than carrying its own copy of the API logic.
+- **usage-check.sh: reset times print in local time** (`2026-07-26 22:00:00 EDT`) instead of the API's UTC ISO 8601. Reset times get compared against a wall clock and turned into cron schedules, and cron is local.
+- **usage-watchdog.sh: same fix in the `USAGE-90/94/97` alarm lines**, which quoted the raw UTC timestamp in a message instructing the session to build a cron wakeup from it. Both scripts fall back GNU `date` → BSD `date` → the raw timestamp, so an unparseable value degrades to what the API said rather than to nothing.
+
 ### 0.24.1 — 2026-07-24
 
 Move the Opus 4.8 pins to Opus 5.

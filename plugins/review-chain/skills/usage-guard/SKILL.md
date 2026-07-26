@@ -41,4 +41,4 @@ The watchdog never gives up on its own — you own the kill switch. **Kill the m
 
 ## Manual check
 
-`bash <skill-dir>/references/usage-check.sh` prints the current 5-hour and 7-day utilization and reset times any time — plus any model-scoped weekly caps the API reports (e.g. a Fable-specific weekly limit) — useful before deciding to launch a large parallel fan-out. Anyone (user or agent) may run it; only arming the watchdog is gated behind this skill.
+`bash <skill-dir>/references/usage-check.sh` prints the current 5-hour and 7-day utilization and reset times (in local time, ready to schedule against) any time — plus any model-scoped weekly caps the API reports (e.g. a Fable-specific weekly limit) — useful before deciding to launch a large parallel fan-out. Anyone (user or agent) may run it; only arming the watchdog is gated behind this skill.

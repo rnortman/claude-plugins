@@ -38,11 +38,23 @@ jq -e '.five_hour.utilization' <<<"$resp" >/dev/null 2>&1 || {
   exit 1
 }
 
+# The API reports reset times in UTC. Render them in the local zone instead: a reset
+# time is only useful compared against a wall clock, and cron schedules are local too.
+fmt_local() {
+  date -d "$1" '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null && return
+  date -j -f "%Y-%m-%dT%H:%M:%S%z" \
+    "$(sed -E 's/\.[0-9]+//; s/Z$/+0000/; s/([+-][0-9]{2}):([0-9]{2})$/\1\2/' <<<"$1")" \
+    '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null && return
+  printf '%s\n' "$1"   # unparseable: show what the API said rather than nothing
+}
+
 jq -r '
-  "5-hour:  \(.five_hour.utilization)%  (resets \(.five_hour.resets_at))",
-  "7-day:   \(.seven_day.utilization)%  (resets \(.seven_day.resets_at))",
+  "5-hour:\t\(.five_hour.utilization)\t\(.five_hour.resets_at)",
+  "7-day:\t\(.seven_day.utilization)\t\(.seven_day.resets_at)",
   # Model-scoped limits (e.g. a Fable-specific weekly cap) live in .limits[] with a
   # non-null .scope; the top-level seven_day_* fields are null now. Print each one.
   (.limits // [] | map(select(.scope != null)) | .[] |
-    "\(if .group == "weekly" then "7-day" elif .group == "session" then "5-hour" else .group end) (\(.scope.model.display_name // .scope.surface // .kind)):  \(.percent)%  (resets \(.resets_at))")
-' <<<"$resp"
+    "\(if .group == "weekly" then "7-day" elif .group == "session" then "5-hour" else .group end) (\(.scope.model.display_name // .scope.surface // .kind)):\t\(.percent)\t\(.resets_at)")
+' <<<"$resp" | while IFS=$'\t' read -r label pct ts; do
+  printf '%-16s %s%%  (resets %s)\n' "$label" "$pct" "$(fmt_local "$ts")"
+done
