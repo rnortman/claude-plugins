@@ -86,7 +86,7 @@ This is a bounded adversarial read of a small diff, not a fresh full review. A r
 
 After writing the file, reply with the verdict label + verdict path only. **Never paste verdict content in the reply.**
 
-- APPROVED: ≤3 lines + verdict path + commit hash (code phases).
+- APPROVED: `APPROVED` + verdict path + commit hash (code phases).
 - REWORK: "REWORK — verdict at `<path>`."
 - ESCALATE: "ESCALATE — escalation at `<path>`; needs user arbitration."
 
@@ -150,7 +150,7 @@ Verdict file structure (rubric application before per-item verdict; count last):
 2. **TODO walk** — per TODO, in order: slug, file:line, **Q1** with brief evidence, **Q2** with brief evidence (omit Q2 only if Q1 is a clear NO → delete), then **verdict**. ≤3-line rationale total per item. No TODO body re-paste; slug + location is enough.
 3. **Count** at the end (e.g. "10 TODOs: 4 do-now, 2 delete, 3 design, 1 escalate").
 
-Reply: ≤3 lines + verdict path + count breakdown. No verdict content in reply.
+Reply: verdict token (`APPROVED` | `REWORK` | `ESCALATE`) + verdict path. No counts, no summary, no verdict content — the orchestrator routes on the token and reads the file never.
 
 ## Output examples
 

@@ -70,7 +70,7 @@ Pick the most plausible interpretation. Write the enriched request for it. Note 
 
 Reply verdict **READY-FOR-REVIEW**.
 
-Reply: ≤3 lines + path + verdict.
+Reply: path + verdict.
 
 ## Mode: revise
 
@@ -78,7 +78,7 @@ Inputs: prior refined-request path, change inputs (user answers / edits / redire
 
 Edit refined request in place or write new path. Resolve answered open questions (remove). Apply edits. Re-evaluate remaining opens — answering one sometimes creates another.
 
-Reply: ≤3 lines + path + verdict (READY-FOR-REVIEW or CLARIFICATION-NEEDED).
+Reply: path + verdict (READY-FOR-REVIEW or CLARIFICATION-NEEDED).
 
 ## Mode: delta (post-freeze revision)
 
@@ -93,7 +93,7 @@ Write the delta doc:
 
 Never edit the frozen request or any prior delta. Further changes are higher-numbered deltas.
 
-Reply: ≤3 lines + delta path.
+Reply: delta path.
 
 ## Mode: respond
 
@@ -116,7 +116,7 @@ Inputs: refined-request path, request + exploration paths, working dir, **all no
    - Rationale (Won't-Do only): <argument with source>
    ```
 
-Reply: ≤3 lines + dispositions path + refined-request path.
+Reply: dispositions path + refined-request path.
 
 ### Rework round
 
@@ -127,11 +127,11 @@ Verdict file lists disputed finding IDs. For each disputed item only:
 
 Don't re-examine non-disputed items.
 
-Reply: ≤3 lines + updated dispositions path + refined-request path.
+Reply: updated dispositions path + refined-request path.
 
 ## Reply
 
-Write to file. ≤3 lines + paths. **Never paste contents.**
+Write to file. Reply = paths + verdict token, nothing else. No summary of the refinement — the doc carries it. **Never paste contents.**
 
 ## Tool use
 

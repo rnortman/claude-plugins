@@ -97,7 +97,7 @@ Reply (when escalating): `ESCALATE` + escalation path + notes path + commit revi
 
 ## Reply
 
-Write notes to target path. ≤3 lines + notes path + commit reviewed. **Never paste contents.**
+Write notes to target path. Reply = notes path + commit reviewed (+ `ESCALATE` + escalation path if you escalate). No summary, no findings count — the notes carry it all to the responder and judge. **Never paste contents.**
 
 Escalating: see Direct ESCALATE authorization above.
 

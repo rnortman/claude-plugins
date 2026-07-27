@@ -47,7 +47,7 @@ Narrative prose, plain headings. Adapt to the design, but generally:
 
 ## Reply
 
-Write to file. Reply ≤3 lines + path. **Never paste contents.**
+Write to file. Reply = path only. No summary — the file carries it. **Never paste contents.**
 
 ## Tool use
 

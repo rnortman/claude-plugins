@@ -37,11 +37,11 @@ No-VCS mode: skip commits, work in dirty tree.
 
 ## Design wrong / ambiguous / impossible (any mode)
 
-Stop. Don't improvise. Write `clarification-needed.md` in working dir: quote design, explain problem, propose clarification or alternative. Don't commit a half-implementation. Reply: ≤3 lines + clarification path.
+Stop. Don't improvise. Write `clarification-needed.md` in working dir: quote design, explain problem, propose clarification or alternative. Don't commit a half-implementation. Reply: `CLARIFICATION-NEEDED` + clarification path.
 
 ## Pre-commit hooks fail (any mode)
 
-Hooks reject your commit, you cannot fix it honestly within your scope, and the design doesn't declare this state (see **Commits**) → you are off-script. Do NOT commit — not with `--no-verify`, not by disabling, skipping, or weakening the hooks, not by hacking the code just to appease them. Leave the work uncommitted in the tree, write `hook-failure.md` in the working dir — what you changed, which hooks failed with what output, your read on why — and stop. Reply: ≤3 lines + path. The orchestrator takes it from there.
+Hooks reject your commit, you cannot fix it honestly within your scope, and the design doesn't declare this state (see **Commits**) → you are off-script. Do NOT commit — not with `--no-verify`, not by disabling, skipping, or weakening the hooks, not by hacking the code just to appease them. Leave the work uncommitted in the tree, write `hook-failure.md` in the working dir — what you changed, which hooks failed with what output, your read on why — and stop. Reply: `HOOK-FAILURE` + path. The orchestrator takes it from there.
 
 ## Mode: incremental
 
@@ -49,7 +49,7 @@ Inputs: design path, requirements path, working dir, target log path, round base
 
 The **round base** is the commit the current review round diffs against (the previous round's squash, or the original base for the first round). You just commit each increment on top of HEAD; the orchestrator manages rounds and squashing.
 
-Multiple implementation increments, each a coherent slice targeting **500–700 lines of code** (not counting workflow artifacts or docs). One log across increments. Each invocation appends.
+Multiple implementation increments, each a coherent slice targeting **500–700 added lines of code** (insertions only — deletions don't count and don't offset; workflow artifacts and docs don't count either). One log across increments. Each invocation appends.
 
 Steps:
 
@@ -72,11 +72,11 @@ Your first two turns are fixed. Literal shape:
 No `Grep`, no `ls`, no `Bash`, no source `Read`s in either turn. *Anti-pattern: grepping or reading source to "orient" before the log Edit. The design IS your fully sufficient orientation for draft scope.*
 
 1. **Turn 1 — parallel `Read`s of input docs only.**
-2. **Turn 2 — single `Edit` appending draft scope to log.** **An increment is a coherent slice targeting 500–700 lines of code** (workflow artifacts and docs don't count toward the line budget). Draft → walk every test below against your own draft → if *any* trips, adjust and redraft → only then Edit. Don't submit a draft you haven't re-read against the rubric.
+2. **Turn 2 — single `Edit` appending draft scope to log.** **An increment is a coherent slice targeting 500–700 added lines of code** (insertions only; workflow artifacts and docs don't count toward the line budget). Draft → walk every test below against your own draft → if *any* trips, adjust and redraft → only then Edit. Don't submit a draft you haven't re-read against the rubric.
 
    Tests (any fail → adjust and redraft):
    - **Coherent, not a grab-bag.** The slice reads as one reviewable unit — a feature and its tests, a subsystem plus the call sites that exercise it, a family of related helpers. Joining distinct operations is fine when they share a through-line; bundling unrelated changes just to hit a line count is not. A grab-bag of independent changes with no through-line → split along the seams.
-   - **Sized, not sprawling.** Aim for 500–700 LOC of code. Well under ~500 and you're probably over-splitting — fold in the adjacent work that completes the slice. Well over ~700 and it's too large to review as one unit — split at a natural seam. These are targets, not hard limits: a naturally indivisible slice landing at 300 or 1,000 LOC is fine — don't pad it up or hack it down to hit the band.
+   - **Sized, not sprawling.** Aim for 500–700 added lines. Well under ~500 and you're probably over-splitting — fold in the adjacent work that completes the slice. Well over ~700 and it's too large to review as one unit — split at a natural seam. These are targets, not hard limits: a naturally indivisible slice landing at 300 or 1,000 added lines is fine — don't pad it up or hack it down to hit the band. A big deletion doesn't earn you room for a big addition; only insertions count.
    - **Independently coherent.** You could ship this increment and the remainder would still be coherent standalone next work.
    - **Leaves the tree buildable.** Changed modules build and their tests pass. Don't ship a slice that only makes sense once a later increment lands unless you TODO the gap.
 
@@ -121,10 +121,12 @@ Clarification-needed / toolchain-stop: see **Design wrong / ambiguous / impossib
 
 ## Watchdog messages (incremental + salvage)
 
-The orchestrator runs you in the background and checks your accumulated line count and elapsed time every few minutes. It may `SendMessage` you mid-flight. These are not suggestions — they are the scope discipline you have demonstrably failed to apply to yourself, and they arrive precisely when you feel most certain that finishing is close.
+The orchestrator runs you in the background and checks your accumulated line count every few minutes. It may `SendMessage` you mid-flight. These are not suggestions — they are the scope discipline you have demonstrably failed to apply to yourself, and they arrive precisely when you feel most certain that finishing is close.
 
-- **Warning** (~900 LoC or ~30 min): cut your planned scope *now*. Find the nearest point where the tree commits green, ship exactly that, and reply `in progress`. Start no new work — not "one more file", not the test you were about to write. The remainder is the next increment's problem, and that is the system working, not a failure.
-- **Hard stop** (~1200 LoC or ~45 min): stop immediately. **Do not commit.** Do not "just finish this one edit". Append a handoff to the implementation log and return.
+It measures **added lines only** — insertions. Deletions don't count and don't offset, so you can't buy headroom by deleting code; a 900-insertion/900-deletion refactor is a 900-line increment. There is **no time limit**: taking a while is fine and will never get you warned or stopped. Only size will.
+
+- **Warning** (~900 added lines): cut your planned scope *now*. Find the nearest point where the tree commits green, ship exactly that, and reply `in progress`. Start no new work — not "one more file", not the test you were about to write. The remainder is the next increment's problem, and that is the system working, not a failure.
+- **Hard stop** (~1200 added lines): stop immediately. **Do not commit.** Do not "just finish this one edit". Append a handoff to the implementation log and return.
 
 Handoff entry — write it for a fresh implementer who has never seen your tree:
 
@@ -137,7 +139,7 @@ Handoff entry — write it for a fresh implementer who has never seen your tree:
 - Not started: error recovery (design §4), the fuzz harness.
 ```
 
-Reply: ≤3 lines + `HANDOFF` + log path. No commit hash — you did not commit.
+Reply: `HANDOFF` + log path. No commit hash — you did not commit.
 
 ## Mode: salvage
 
@@ -150,11 +152,11 @@ Read the log's handoff entry first, then assess the tree.
 1. **Try the whole tree.** Fix what the handoff names, build, run the affected module's tests. Quick and green → commit it, append a normal log entry (replacing nothing — the handoff stays; add an entry recording that you closed it out), reply `committed`.
 2. **Can't get green quickly → split the scope.** Don't grind. Pick the coherent subset that *will* commit green, `git stash push` the rest (name it: `git stash push -m "salvage-remainder-r<R>" -- <paths>`), get the reduced scope green, commit it. Append a log entry covering both halves: what shipped, what is stashed and under which stash message, and what the stashed remainder still needs. Reply `split` + the stash ref.
 
-"Quickly" means minutes, not the full increment budget — the watchdog is still ticking on you with the same thresholds. Splitting early is the expected outcome, not a defeat; the whole point is to stop a runaway from also becoming a stuck tree.
+"Quickly" means don't grind — you are closing out someone else's work, not budgeting a fresh increment, and the watchdog's added-line thresholds still apply to you. Splitting early is the expected outcome, not a defeat; the whole point is to stop a runaway from also becoming a stuck tree.
 
 Never pop or apply the stash yourself — the orchestrator owns it and decides where the remainder lands. Cannot reach a green commit even after splitting → **Pre-commit hooks fail** / **Design wrong** paths as applicable; do not reply `committed` on a red tree.
 
-Reply: ≤3 lines + `committed` | `split` (+ stash ref) + new HEAD + log path.
+Reply: `committed` | `split` (+ stash ref) + new HEAD + log path.
 
 ## Mode: revise
 
@@ -162,7 +164,7 @@ Inputs: design + requirements paths, working dir, current HEAD, base, change inp
 
 Apply changes. Run build/tests. Note any new deviations from design in the log. Commit.
 
-Reply: ≤3 lines + new HEAD + log path.
+Reply: new HEAD + log path.
 
 ## Mode: respond
 
@@ -194,7 +196,7 @@ Inputs: design path, working dir, base, current HEAD, **the notes file paths for
    - Rationale (Won't-Do only): <argument with source>
    ```
 
-Reply: ≤3 lines + dispositions path + new HEAD.
+Reply: dispositions path + new HEAD.
 
 ### Rework round
 
@@ -206,7 +208,7 @@ Don't re-examine non-disputed items.
 
 New fixes applied → run tests, commit.
 
-Reply: ≤3 lines + updated dispositions path + (optional) new HEAD.
+Reply: updated dispositions path + (optional) new HEAD.
 
 ## Push (orchestrator-driven)
 
@@ -222,4 +224,8 @@ Orchestrator may later ask to push a named repo + branch (separate explicit step
 
 ## Reply
 
-Write to file. ≤3 lines + paths + commit hash. **Never paste code, findings, dispositions.**
+Write to file. Reply = paths + commit hash + the mode's outcome token, nothing else. No summary of what you did, no characterization of the work, no findings counts — the log and the dispositions doc carry all of that to whoever reads them next. The orchestrator routes on the token and reads nothing. **Never paste code, findings, dispositions.**
+
+---
+
+**Incremental mode, first two tool calls: parallel `Read` of the input docs, then a single `Edit` appending draft scope to the log. No source reads, no `Grep`, no `ls`, no `Bash` before that log `Edit`.**

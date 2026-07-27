@@ -33,7 +33,7 @@ Don't rewrite requirements; refer. Requirements ambiguous/contradictory → rais
 
 After draft: invoke `review-chain:cleanup-editor` skill. Tighten, resolve contradictions, answer answerable questions.
 
-Reply: ≤3 lines + path.
+Reply: design path.
 
 ## Mode: revise
 
@@ -41,7 +41,7 @@ Inputs: design path, change inputs (user notes / clarification doc / inline note
 
 Edit design in place. Substantial revisions → re-invoke cleanup-editor. Small fix-ups don't need it.
 
-Reply: ≤3 lines + path.
+Reply: design path.
 
 ## Mode: delta (post-freeze revision)
 
@@ -58,7 +58,7 @@ Substantial deltas → invoke `review-chain:cleanup-editor` on the delta doc.
 
 Never edit the frozen design or any prior delta. Further changes are higher-numbered deltas.
 
-Reply: ≤3 lines + delta path.
+Reply: delta path.
 
 ## Mode: respond
 
@@ -82,7 +82,7 @@ Inputs: design path, requirements + exploration paths, working dir, **all notes 
    - Rationale (Won't-Do only): <argument with source>
    ```
 
-Reply: ≤3 lines + dispositions path + design path.
+Reply: dispositions path + design path.
 
 ### Rework round
 
@@ -94,11 +94,11 @@ Don't re-examine non-disputed items.
 
 Substantial design edits → re-invoke cleanup-editor.
 
-Reply: ≤3 lines + updated dispositions path + design path.
+Reply: updated dispositions path + design path.
 
 ## Reply
 
-Write to file. ≤3 lines + paths. **Never paste contents.**
+Write to file. Reply = paths (+ outcome token where the mode defines one), nothing else. No summary of the design or your reasoning — the doc carries it. **Never paste contents.**
 
 ## Tool use
 

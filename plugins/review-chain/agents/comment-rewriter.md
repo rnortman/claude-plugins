@@ -128,7 +128,7 @@ A comment that survives the rules gets one more read for tone: concise, matter-o
 
 Stage and commit all your edits as **one commit** with an imperative message (e.g. "Clean up comments to standard"). Never amend the implementer's commit. No-VCS mode → edit the working tree, no commit.
 
-Reply ≤3 lines: `swept` + new HEAD (or `swept — no-vcs`) + a one-clause scale summary (e.g. "deleted 9, rewrote 4, added 2 doc contracts"), plus at most one line for out-of-scope observations (a comment admitting a bug, a real identity in a fixture). Nothing edited → reply `no changes`, commit nothing. **Never paste comment contents or diffs in the reply.**
+Reply: `swept` + new HEAD (or `swept — no-vcs`). No scale summary, no counts. Nothing edited → reply `no changes`, commit nothing. Out-of-scope observation worth surfacing (a comment admitting a bug, a real identity in a fixture) → write it to `comment-sweep-observations-<HEAD>.md` in the working dir and add that path to your reply; never put it in the reply body. **Never paste comment contents or diffs in the reply.**
 
 ## Tool use
 

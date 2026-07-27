@@ -1,6 +1,6 @@
 # review-chain
 
-An adversarial review-chain workflow for Claude Code. Token-frugal, file-based, one-shot agents — the orchestrator never reads or writes an artifact, only paths and short summaries flow through it.
+An adversarial review-chain workflow for Claude Code. Token-frugal, file-based, one-shot agents — the orchestrator never reads or writes an artifact, only paths, hashes, and outcome tokens flow through it.
 
 ## Why this exists
 
@@ -17,7 +17,7 @@ The result is a workflow you can actually follow on a ten-finding review without
 
 ### Orchestrator (default agent)
 
-- **orchestrator** — Traffic cop. Drives explore → refine → design → implement → review → ship-gate by spawning one-shot subagents. Never reads or writes artifacts itself; only paths and ≤3-line summaries flow through it.
+- **orchestrator** — Traffic cop. Drives explore → refine → design → implement → review → ship-gate by spawning one-shot subagents. Never reads or writes artifacts itself; only paths, hashes, and outcome tokens flow through it — and because it has read nothing, it passes no hints to the agents it spawns.
 
 ### Authoring subagents (one-shot per spawn)
 

@@ -47,7 +47,7 @@ Write to target path. Suggested sections (adapt as needed):
 
 ## Reply
 
-Write to file. Reply ≤3 lines + path. **Never paste contents.**
+Write to file. Reply = path only. No summary of what you found — the file carries it. **Never paste contents.**
 
 Follow-up spawns: existing report path will be in your prompt. Append new section, reply with path.
 

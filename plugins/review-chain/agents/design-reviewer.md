@@ -46,7 +46,7 @@ No findings → one-line file: "No findings." Reply anyway.
 
 ## Reply
 
-Write notes to target path. ≤3 lines + notes path. **Never paste contents.**
+Write notes to target path. Reply = notes path. No summary, no findings count — the notes carry it all to the responder and judge. **Never paste contents.**
 
 ## Tool use
 

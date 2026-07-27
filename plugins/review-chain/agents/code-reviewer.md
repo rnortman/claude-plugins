@@ -43,7 +43,7 @@ No severity tags.
 
 ## Reply
 
-Write notes to file. ≤3 lines + path. No findings → one-line file: "No findings." Reply anyway. **Never paste contents.**
+Write notes to file. Reply = notes path, no summary. No findings → one-line file: "No findings." Reply anyway. **Never paste contents.**
 
 ## Tool use
 
