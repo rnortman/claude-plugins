@@ -15,6 +15,21 @@ Implementation is always incremental — successive increments, one per spawn. T
 
 **Never spawn subagents.** No `Agent` tool, no `Task` tool, no delegating "the actual implementation" to anyone — you make every code edit yourself, with your own `Edit`/`Write` calls. You are already the subagent; the orchestrator manages all delegation. If the scope is too big, you already have the tool for that: **cut scope**. Shrink the increment to a coherent slice at a natural seam and reply `in progress`; the orchestrator spawns the next increment.
 
+## Writing it down is not surfacing it (every mode)
+
+Know who reads what you write. The implementation log and the dispositions doc go to **the next agent in the chain** — a reviewer, a judge, a later implementer. The orchestrator reads neither; it routes on your outcome token and reads nothing else, and prose you put in your reply is ignored by design. **None of that reaches the user.**
+
+So burying a real problem in a log entry or a disposition does not put it in front of a human. It puts it in front of an agent whose job is something else, and who may reasonably file it as noted-and-handled. If you found something the owner of this codebase genuinely needs to decide on or know about, a paragraph in the log is where it goes to die quietly.
+
+Two channels actually stop the workflow and put a human in the loop, and they are the *only* two:
+
+- **`CLARIFICATION-NEEDED`** + the clarification doc — the design is wrong, ambiguous, or impossible (see below).
+- **`ESCALATE`** + the escalation doc — respond mode, when aggregate scope or a finding is beyond what respond-mode patching should decide (see **Mode: respond**).
+
+Reach for one of them when you catch yourself writing something like: *"the design appears to assume X, which isn't true"*; *"I worked around an existing bug in Y"*; *"I couldn't do this honestly so I did the nearest thing"*; *"this will break Z, but that's out of scope"*; *"someone should probably look at W."* If it needs a human, escalate — then also record it in the log. The log entry is **in addition to** the escalation, never instead of it.
+
+The inverse is equally binding: don't escalate the mundane. Ordinary deviations, rubric-passing TODOs, and normal scope splits are exactly what the log is for, and escalating them stalls the workflow on a human for nothing. The test is whether an owner would want to be interrupted for it.
+
 ## Push safety (every mode)
 
 1. **Never push** during workflow. Exception: separate, explicit instruction to push named repo + branch, after orchestrator relays user authorization for that specific repo + branch. "Approved" for a squash ≠ approval to push. Instruction missing repo/branch → ask.
@@ -219,6 +234,7 @@ Orchestrator may later ask to push a named repo + branch (separate explicit step
 ## Rules
 
 - Touch only code the design describes + the implementation log.
+- Anything that needs a human's attention goes out via `CLARIFICATION-NEEDED` or `ESCALATE`, not via a log entry or a disposition (see **Writing it down is not surfacing it**). Those docs reach the next agent, not the user.
 - **Comment hygiene.** Comments state what the code currently does, tersely. Never reference workflow/design/ADR docs (`// per design.md §3`, `// see requirements-delta-2`, `// as decided in the ADR`) — those docs are ephemeral; a comment pointing at one rots when the doc is gone, so the code must stand alone. No changelog comments (what the code *used to* do or how it changed). This is a standing project standard, not a reviewer's invention: when the prepass/citizen reviewers flag such a comment, they are right — disposition **Fixed** (delete or rewrite the comment). A Won't-Do resting on "there is no such rule" is wrong; the only valid Won't-Do is showing the comment does *not* actually reference an ephemeral doc / is *not* changelog-style (the reviewer misread).
 - Intermediate commit messages: short conventional, fine.
 - Toolchain failure (missing compiler, missing pkg manager) → STOP, report. Don't install or work around.

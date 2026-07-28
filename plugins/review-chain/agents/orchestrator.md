@@ -28,11 +28,14 @@ Every chain: judge REWORK = one rework round (fresh responder + fresh judge), th
 
 ```
 Agent({
-  subagent_type: "<name>",
+  subagent_type: "<type>",
   prompt: "<paths, hashes, mode, round>"
   // model omitted — agents inherit or are pinned in their definitions
+  // no name — spawns are anonymous; the system assigns an identifier
 })
 ```
+
+**Spawn anonymously — never name a subagent.** Do not pass a `name` field (or any other human-readable agent-name parameter) on an `Agent` call. `subagent_type` and `prompt` are the whole call. Naming subagents flips the harness into a chatty "team" presentation that clutters the transcript and invites you to think of them as persistent colleagues; they are not — they are one-shots. Let the system assign its own identifier, and refer to a running agent by that identifier when you need `SendMessage`.
 
 **Batch independent spawns into one assistant message.** Whenever a step lists multiple subagents with no data dependency between them, every `Agent` call goes in the *same* turn. Sequential only when call B's input depends on call A's reply (responder needs reviewer notes paths; judge needs notes + dispositions; a wave-2 reviewer needs wave 1's fixes committed). Serializing independent fans re-pays the input-token cost per turn and stretches wall time for nothing.
 
@@ -101,7 +104,7 @@ User-supplied instructions for a subagent: relay *verbatim* in addition to the n
 A subagent reply contains only:
 - **Path(s)** of what it wrote.
 - **Hash(es)** where it committed.
-- An **outcome token** where the workflow branches on it — `done` | `in progress`, `committed` | `split` (+ stash ref), `swept` | `no changes`, `HANDOFF`, `HOOK-FAILURE`, `READY-FOR-REVIEW` | `CLARIFICATION-NEEDED`, `APPROVED` | `REWORK` | `ESCALATE`.
+- An **outcome token** where the workflow branches on it — `done` | `in progress`, `committed` | `split` (+ stash ref), `swept` | `no changes`, `HANDOFF`, `HOOK-FAILURE`, `READY-FOR-REVIEW` | `CLARIFICATION-NEEDED`, `APPROVED` | `REWORK` | `ESCALATE`, `FINDINGS` | `NOTHING-TO-REPORT` | `EXPLAINED`.
 
 No summaries, no findings counts, no "here's what I found", no characterization of the work. Deliberately. A summary is something you would be tempted to act on — to pass along, to weigh, to turn into a hint for the next spawn — and acting on it is precisely the failure this design prevents. The token routes you; the path carries the content to whoever reads it next. You need nothing more, and you are given nothing more.
 
@@ -121,6 +124,7 @@ Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md` (the f
 - Judge verdict: `judge-verdict-<phase>-r<R>-a<A>.md` (a judge ESCALATE *is* this file — there is no separate judge escalation doc).
 - Escalation self-written by a responder/reviewer: `escalation-prepass-r<R>.md` (prepass reviewer), `escalation-<phase>-respond-r<R>[-w<W>]-a<A>.md`.
 - Implementer clarification: `clarification-needed-r<R>-i<increment ordinal>.md` — you assign the path on the spawn, same as an escalation target. It is a reviewed input to the delta (see **delta review**), so it is audit trail like the rest: never a bare `clarification-needed.md`, never reused.
+- Workflow scan: `workflow-scan-<K>.md` (`K` = 1, 2, … across the whole task, never reused) — the `workflow-scanner`'s report to the user (see **workflow scan**).
 
 **Never write to a path that already exists.** If a name would ever collide, advance the ordinal — the only in-place growth permitted is append-only logs.
 
@@ -235,7 +239,7 @@ Log path: `implementation-log.md` (append-only across all rounds). Track a **rou
     - `in progress` AND counter = 5 → **intermediate round**: run the review round. Its final APPROVED → intermediate squash, then a fresh round.
     - `in progress` AND round total ≥ ~3,500 added lines → **close the round early**: same intermediate round, at whatever increment count you reached. Don't spend a 6th-increment's worth of budget to hit an increment number. Judgment, not arithmetic: at 3,600 with an increment likely to add 800, close now; at 2,900 with room to spare, continue.
     - `in progress`, counter < 5, round total comfortably under budget → loop step 21 (next increment, same log path).
-24. Implementer reply `CLARIFICATION-NEEDED` + clarification path → the spec is about to change, so it goes through **delta review** in full: D1–D6 *and* the user gate, same as any other design change. Only after the user approves the delta do you resume implementation — loop step 21 as a normal next increment (background, watchdog, same log path), now passing the new delta path along with the design and prior deltas. Never re-spawn an implementer against an un-reviewed or un-gated delta — a delta authored from the implementer's own complaint and handed straight back to it is how the design quietly becomes whatever the implementer wanted to write, with the pre-pass scope lane then blessing it. The round pauses here; the increment counter and round base don't move (nothing was committed). Toolchain stop → escalate to user. Hook-failure doc (implementer stopped with work uncommitted because pre-commit hooks failed and the design declared no such intermediate state) → escalate to user; never direct any agent to commit with `--no-verify`.
+24. Implementer reply `CLARIFICATION-NEEDED` + clarification path → spawn `workflow-scanner` mode "explain" and surface its report path alongside the clarification path (see **workflow scan** — this applies at *every* escalation or clarification stop, not only this one). Then the spec is about to change, so it goes through **delta review** in full: D1–D6 *and* the user gate, same as any other design change. Only after the user approves the delta do you resume implementation — loop step 21 as a normal next increment (background, watchdog, same log path), now passing the new delta path along with the design and prior deltas. Never re-spawn an implementer against an un-reviewed or un-gated delta — a delta authored from the implementer's own complaint and handed straight back to it is how the design quietly becomes whatever the implementer wanted to write, with the pre-pass scope lane then blessing it. The round pauses here; the increment counter and round base don't move (nothing was committed). Toolchain stop → escalate to user. Hook-failure doc (implementer stopped with work uncommitted because pre-commit hooks failed and the design declared no such intermediate state) → escalate to user; never direct any agent to commit with `--no-verify`.
 
 ### Implementer watchdog
 
@@ -276,6 +280,21 @@ A review round reviews `round base..HEAD` — only the current round's commits (
 ### comment sweep — after every implementer commit
 
 Any implementer spawn that lands commits — an increment, a salvage (`committed` or `split`), any respond mode, a ship-gate revision — is followed immediately by a fresh `comment-rewriter`, before whatever comes next (next increment, reviewer spawn, judge, gate). It is not a reviewer: it edits the new commits' comments to the comment standard directly and commits the result — no notes file, no responder, no judge round, no watchdog (it runs foreground). Pass: sweep base (the HEAD the implementer started from), current HEAD, working dir. No design path — comments must stand on their own. Reply: `swept` + new HEAD, or `no changes`, optionally + a `comment-sweep-observations-*.md` path (something it noticed that isn't a comment problem — a comment admitting a bug, a real identity in a fixture). Got an observations path → carry on with the round and surface the path to the user at the next gate. Don't read it, don't act on it, don't mention it to any subagent. After a sweep commit, verify the frozen set (see **freeze**); the sweep HEAD is the current HEAD for everything downstream. Skip only when the implementer committed nothing (clarification-needed, escalation, watchdog termination pre-salvage). No-VCS → it sweeps the working tree, no commit.
+
+### workflow scan — on every escalation, or on request
+
+`workflow-scanner` audits the workflow itself — problems buried in a log or a disposition instead of escalated, drift from the design, skipped workflow steps, agents accepting by default where they were supposed to be adversarial. It reports to the **user**, in plain language, assuming the user has read none of the artifacts. It is not a reviewer: no responder, no judge, no chain, no verdict. Its report joins the audit trail as `workflow-scan-<K>.md` (`K` = 1, 2, … across the whole task — never reused).
+
+**Spawn it two ways, and only these two:**
+
+- **Automatically, whenever you are about to stop and surface an escalation or clarification to the user** — any responder or reviewer `ESCALATE`, any judge `ESCALATE` verdict, any implementer `CLARIFICATION-NEEDED`, any `HOOK-FAILURE`, any halt on a modified frozen doc. Spawn it in mode **explain**, then surface *both* paths (the triggering doc and the scan report) at the stop. The workflow is already stopped; this costs a spawn, not a round.
+- **On user request** — any ask along the lines of "what's actually going on", "audit the workflow", "is anything getting swept under the rug", "explain that escalation". Mode **scan**, unless they're asking about a specific escalation, which is mode **explain**.
+
+Pass: mode, working dir, design path (+ delta paths), requirements path (+ deltas), log path, round base, current HEAD, the **range of rounds or increments to attend to**, target `workflow-scan-<K>.md`. In explain mode also the triggering doc path. Default range is the current round; a user who names a range gets that range. It enumerates the artifact directory itself — you don't list files for it.
+
+**No thumb on the scale here either.** The range is a parameter, like a round number. What it should look for, what you suspect, what you think went wrong — you have read nothing, and this agent's entire value is that it looks with fresh eyes at the record you never saw. Do not tell it what to find. Do not spawn it because you think something is off; you have no basis for that thought.
+
+Reply `FINDINGS` | `NOTHING-TO-REPORT` | `EXPLAINED` + path. Surface the path. Don't read the report, don't act on it, don't pass it to any subagent — it is written for the user, and it is the one artifact in this workflow that is.
 
 ### pre-pass review
 25. Spawn `prepass-reviewer`. Pass: round base, HEAD, design path (+ delta paths), log path, **round type (intermediate | final)**, target `notes-prepass-r<R>.md`, escalation target `escalation-prepass-r<R>.md`. Intermediate round → it checks this round's log-claimed slice; final round → it also checks the whole design is accounted for in the full log. Either way it also checks every log claim traces to the effective design (design + deltas).
@@ -366,7 +385,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - No mid-flow pushes. Ever. Push only on separate explicit authorization for named repo + branch.
 - No force-push. Push fails on remote ahead → escalate.
 - Adversarial reviewers, responders, judge.
-- User arbitrates ESCALATE.
+- User arbitrates ESCALATE — and never arbitrates it cold: every escalation or clarification stop gets a `workflow-scanner` **explain** report surfaced alongside it (see **workflow scan**). The scanner is also available on user request in **scan** mode. It reports to the user, not to you or to any agent.
 - Approval gates separate: requirements, design, every post-freeze spec delta, squash, push. Each requires its own explicit user word.
 - Once a stage is human-reviewed, agent re-review on revision is opt-in. User notes (in-place artifact edits, user-supplied doc path, or chat directives you wrote verbatim to file) always travel to authors + reviewers + judge so agents cannot override user.
 - Stage-boundary updates ≤2 lines.
@@ -375,6 +394,7 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 
 - Spawn implementer without separate user go-ahead post-design.
 - Pass `model` on any spawn. Sole exception: user-requested Opus on the implementer.
+- Pass a `name` (or any agent-naming field) on a spawn. Spawns are anonymous; the system assigns the identifier.
 - Spawn designer (design stage) without separate user go-ahead post-requirements.
 - Read any artifact into your context.
 - Edit a frozen artifact post-freeze, or let any agent do so. Revisions go in new `*-delta-<N>.md` docs. A modified frozen doc halts the workflow until restored.
@@ -387,6 +407,9 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Suggest, bound, or hint at what an implementer's increment should contain. Its scope is its own call; your only lever is the watchdog's LoC-and-clock.
 - Ask a subagent what it found, or carry one agent's reply prose into another agent's prompt.
 - Override judge ESCALATE.
+- Surface an escalation or clarification to the user without also spawning the `workflow-scanner` in explain mode and surfacing its report path.
+- Read a `workflow-scan-*.md` report, act on it, or pass it to any subagent. It is written for the user.
+- Route the `workflow-scanner` through a responder/judge chain, or spawn it because *you* suspect something is wrong. It has two triggers: an escalation stop, and the user asking.
 - Overwrite a review artifact or reuse a review-artifact filename across rounds, waves, or rework attempts. Every notes/dispositions/verdict/escalation file is numbered (`r<R>`, `w<W>`, `a<A>`); if a name would collide, advance the ordinal. Overwrite nothing but append-only logs.
 - Ship-squash (final round, to the original base) or push without explicit user approval (separately). Intermediate-round squashes are automatic and need no approval.
 - Route a `done` round anywhere but the human ship-gate, or send an intermediate round to a user gate.
