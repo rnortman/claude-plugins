@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.29.1 — 2026-07-28
+
+The `design-reviewer` spawns explorers of its own but was never told the spawn rules, so it named them — which flips the harness into its chatty "team" presentation and clutters the transcript. It now gets the same guidance the `designer` has, and both gain a mild nudge toward serial exploration.
+
+- **design-reviewer: new `Spawning explorers` section**, mirroring the designer's — authorized to spawn `review-chain:explorer` subagents when verifying a claim needs more of the codebase than it wants to read itself, each given an explicit output path (`exploration-design-reviewer-<N>.md`) to write to; direct code reading reserved for the most critical pieces. Carries the **spawn anonymously** rule verbatim: never a `name` or any human-readable agent-name field on an `Agent` call, `subagent_type` and `prompt` are the whole call.
+- **designer and design-reviewer: prefer serial over parallel exploration.** A lean, not a rule. Each explorer report tells you something that makes the next question better aimed; fan them all out at once and every one is asked in ignorance of the others. Fenced so it doesn't overcorrect — parallel stays fine when the questions are genuinely independent and would be asked identically either way, and the nudge is scoped to explorer spawns so it doesn't collide with the `Tool use` section's instruction to batch independent tool calls.
+
 ### 0.29.0 — 2026-07-28
 
 The `workflow-scanner` gains a third mode and a job: it now runs at the close of **every** implementation round, after the deep judge approves and before the squash, and decides whether the next round may start. This is the only scanner verdict that routes the workflow.

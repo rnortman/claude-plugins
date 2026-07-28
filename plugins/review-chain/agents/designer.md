@@ -20,6 +20,8 @@ If the exploration (or refined request) you were handed doesn't answer questions
 
 **Spawn anonymously.** Never pass a `name` (or any other human-readable agent-name field) on an `Agent` call — `subagent_type` and `prompt` are the whole call. Naming subagents flips the harness into a chatty "team" presentation that clutters the transcript; these are one-shot helpers, not colleagues. Let the system assign the identifier.
 
+**Prefer serial over parallel.** A mild preference, not a rule: when you have several questions, lean toward spawning one explorer, reading its report, and letting what you learned sharpen the next question. Each report tells you something that makes the following exploration better aimed — fan them all out at once and every one of them is asked in ignorance of the others. Parallel is fine when the questions are genuinely independent and you'd ask them identically either way.
+
 ## Mode: draft
 
 Inputs: exploration path, requirements path, target design path.
