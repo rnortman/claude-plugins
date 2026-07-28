@@ -4,6 +4,16 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.29.0 — 2026-07-28
+
+The `workflow-scanner` gains a third mode and a job: it now runs at the close of **every** implementation round, after the deep judge approves and before the squash, and decides whether the next round may start. This is the only scanner verdict that routes the workflow.
+
+- **New mode: `gate`.** Same hunt as `scan`, plus one call — `CONTINUE` or `ESCALATE`. Those two tokens only; findings and the decision are separate things, and a round with findings usually still continues.
+- **The bar is wasted work, not severity.** Nothing is lost by continuing — the squash keeps the code, the artifacts survive, the report gets read at the next gate, and anything wrong stays fixable. Stopping spends a human's attention and blocks the pipeline. So the test is whether the work still to come would build on, bake in, or spread the problem: a serious but self-contained bug is a `CONTINUE`, and a mild-looking wrong turn the next three increments would build on is an `ESCALATE`. Default is `CONTINUE`. Deciding it means reading the effective design against the log to work out what remains and whether it touches what was found — that comparison is the actual work of the mode, and the round type (intermediate | final) tells it whether there is a next round to protect at all.
+- **orchestrator step 36a**, between deep-review APPROVED and the squash. `CONTINUE` → squash (intermediate) or ship-gate (final), carrying the report path forward to list at the next user gate. `ESCALATE` → stop, surface the report, no squash and no next round. It runs on the final round too — the ship-gate is already a user gate, but the report is what the user reads there.
+- **A gate `ESCALATE` does not spawn a second scanner.** The standing rule that every escalation stop gets an explain-mode report would otherwise have the scanner explaining itself; its gate report already stands on its own the way an explain report does.
+- **The verdict is not adjudicated.** No responder, no judge, no dispute — new **Never** bullets forbid weighing a gate `ESCALATE` against the judge's APPROVED, treating a `CONTINUE` with findings as grounds to stop, and squashing or starting a round before the scan replied.
+
 ### 0.28.0 — 2026-07-28
 
 New `workflow-scanner` agent, and the gap it exists to close: an agent writing a problem into the implementation log or a dispositions doc has surfaced it to the *next agent*, not to a human. The orchestrator reads neither and ignores reply prose, so a load-bearing admission in a passing sentence — "the design assumes X, which isn't true", "I worked around an existing bug" — reaches nobody who can act on it. Only `CLARIFICATION-NEEDED` and `ESCALATE` put a human in the loop.
