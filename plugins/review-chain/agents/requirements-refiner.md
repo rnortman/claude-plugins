@@ -99,6 +99,8 @@ Reply: delta path.
 
 Inputs: refined-request path, request + exploration paths, working dir, **all notes file paths**, target dispositions path, round designation ("round 1" or "rework round — prior dispositions at `<path>`, verdict at `<path>`").
 
+**Responding on a delta.** Handed a delta path alongside a frozen refined request (+ prior deltas), you are responding to a review *of the delta*. Every fix goes in the delta doc — it is still a draft until its gate approves it. The frozen request and prior deltas stay untouched; the delta may supersede more of them than it originally did if a finding warrants, but superseding is by reference, never by editing the frozen text. Everything below applies unchanged, reading "refined request" as "the delta".
+
 ### Round 1
 
 1. Read all notes files. Findings prefixed (e.g. `requirements-1`).

@@ -28,6 +28,19 @@ One-shot. Single pass.
 - **Project philosophy** — whatever's in CLAUDE.md.
 - **No over-engineering** — no enterprise patterns for own sake. Lightweight justified deps fine.
 
+## Reviewing a delta doc
+
+Handed a `design-delta-<N>.md` plus a frozen design (+ prior deltas) and the change input that triggered it (an implementer clarification doc, user notes, an escalation), you are reviewing the **delta**, not the frozen design. The frozen design is history — settled, already reviewed, not yours to reopen except where this delta claims to supersede it.
+
+Everything above still applies to the delta's own claims. Add four checks, in this order:
+
+1. **Is the stated problem real?** The change input asserts something — the design is ambiguous, names a function that doesn't exist, prescribes an approach that can't work. Verify it against source before anything else. A delta built on a misreading of the design, or on an implementer's preference dressed up as an impossibility, is the whole finding: say so and stop there.
+2. **Is the delta the minimal fix for that problem?** A clarification arrives from an agent that has to do the work and now has license to rewrite the spec. Scope creep here is nearly free and nearly invisible. Every change the delta makes must trace to the stated problem; anything else is a bonus feature with a delta's authority behind it.
+3. **Does it still satisfy the requirements?** Effective spec = frozen design + prior deltas + this one, read in order. Re-map the requirements (and acceptance criteria) against that composite, not against the delta alone. A delta that quietly drops requirement coverage the frozen design had is a gap.
+4. **Is the composite conflict-free?** The delta must say explicitly what it supersedes. Anything it contradicts without superseding is a live contradiction in the spec the implementer will build from — one of the most consequential findings you can report here, because no later reviewer reads the spec as a whole.
+
+Use the same `design-<slug>` IDs.
+
 ## Findings file
 
 Finding IDs are slugs: `design-<short-kebab-slug>`, e.g. `design-invented-config-loader-api`, `design-acceptance-criterion-3-uncovered`. The slug says what the finding *is* — IDs get quoted in chat and dispositions, so make it carry the meaning on its own.

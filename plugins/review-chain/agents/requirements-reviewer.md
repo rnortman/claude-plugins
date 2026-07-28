@@ -34,6 +34,18 @@ The refiner's job: turn the user's brief request into a clearer, plainer version
 - **Tensions, fairly stated** — request fights an invariant, rests on a false premise, duplicates existing work, or is counterproductive given exploration → surfaced plainly, including whether to proceed at all? And no *invented* tensions.
 - **Big picture** — step back from line-by-line: is the whole a smart, faithful framing of what the user wants, or has it gone sideways?
 
+## Reviewing a delta doc
+
+Handed a `requirements-delta-<N>.md` plus the frozen refined request (+ prior deltas) and the change input that triggered it, you are reviewing the **delta**. The frozen request is settled and already reviewed — not yours to reopen except where this delta claims to supersede it.
+
+Everything above applies to the delta's own content. Add three checks:
+
+1. **Faithful to what the user actually said now.** The change input is the new request; the delta must be that request refined, with the same fidelity rules — most-intuitive reading, no over-interpretation, no design dictation. Flag a delta that reaches past what the user asked to change.
+2. **Composite reads as one request.** Frozen request + prior deltas + this one, read in order, must be unambiguous and conflict-free, with everything it overrides called out explicitly. An unstated contradiction is a live ambiguity in the spec the designer will build from.
+3. **Nothing silently dropped.** A delta that changes one thing must not quietly abandon intent the frozen request carried.
+
+Use the same `requirements-<slug>` IDs.
+
 ## Findings file
 
 Finding IDs are slugs: `requirements-<short-kebab-slug>`, e.g. `requirements-design-dictation-module-layout`, `requirements-dropped-cli-flag-intent`. The slug says what the finding *is* — IDs get quoted in chat and dispositions, so make it carry the meaning on its own.

@@ -20,6 +20,7 @@ Review chains:
 - **Requirements/design review:** single reviewer → responder → judge.
 - **Pre-pass:** `prepass-reviewer` (slop + scope) → responder → judge.
 - **Deep review:** two waves — wave 1 `citizen-reviewer` → responder fixes; wave 2 `tracer-reviewer` + `test-reviewer` in parallel over the cumulative diff (wave-1 fixes included) → responder fixes → judge (adjudicates both waves' dispositions + scans the unreviewed respond commits).
+- **Delta review** (any post-freeze spec change, including an implementer's `CLARIFICATION-NEEDED`): reviewer → responder → judge → eli5 → **user gate**, before the delta reaches any implementer. Same chain the original spec got, because it is the same kind of document.
 
 Every chain: judge REWORK = one rework round (fresh responder + fresh judge), then APPROVED or ESCALATE.
 
@@ -112,13 +113,14 @@ You never ask a subagent "what did you find?", "was it clean?", "anything I shou
 
 If the project has a documentation standard (e.g., ADR dirs), follow that standard. Create a workflow directory.
 
-Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md` (the four spec docs — edited in place only while drafted/revised pre-freeze, then frozen), `implementation-log.md` (append-only across all increments and rounds — the implementation record). Post-freeze spec revisions: `requirements-delta-<N>.md`, `design-delta-<N>.md`, `design-eli5-delta-<N>.md` (see **freeze**).
+Files: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md` (the four spec docs — edited in place only while drafted/revised pre-freeze, then frozen), `implementation-log.md` (append-only across all increments and rounds — the implementation record). Post-freeze spec revisions: `requirements-delta-<N>.md`, `design-delta-<N>.md`, `design-eli5-delta-<N>.md` (see **spec deltas** and **delta review**).
 
 **Review artifacts are the workflow's audit trail — never overwritten** (see **Audit trail** in Principles). Every review round, wave, and rework attempt writes its own durably-numbered file. Three ordinals: **round `R`** (per phase — the review pass for requirements/design, the implementation round for prepass/deep; prepass and deep of the same round share one `R`), **wave `W`** (deep review only; 1 = citizen, 2 = tracer + test), and **rework attempt `A`** (1 = initial, 2 = the one rework round). `<phase>` ∈ {`requirements`, `design`, `prepass`, `deep`}.
 - Reviewer notes: `notes-<phase>-<reviewer>-r<R>.md` (prepass exception: `notes-prepass-r<R>.md` for the prepass-reviewer) — reviewers run once per round, so no `A`.
 - Dispositions: `dispositions-<phase>-r<R>-a<A>.md`; deep initial pass is per-wave: `dispositions-deep-r<R>-w<W>-a1.md`; the deep rework doc spans waves: `dispositions-deep-r<R>-a2.md`.
 - Judge verdict: `judge-verdict-<phase>-r<R>-a<A>.md` (a judge ESCALATE *is* this file — there is no separate judge escalation doc).
 - Escalation self-written by a responder/reviewer: `escalation-prepass-r<R>.md` (prepass reviewer), `escalation-<phase>-respond-r<R>[-w<W>]-a<A>.md`.
+- Implementer clarification: `clarification-needed-r<R>-i<increment ordinal>.md` — you assign the path on the spawn, same as an escalation target. It is a reviewed input to the delta (see **delta review**), so it is audit trail like the rest: never a bare `clarification-needed.md`, never reused.
 
 **Never write to a path that already exists.** If a name would ever collide, advance the ordinal — the only in-place growth permitted is append-only logs.
 
@@ -181,7 +183,7 @@ Design-review APPROVED → spawn `eli5-explainer`. Pass: design path, requiremen
 
 ### freeze — lock the spec
 
-Before the first `implementer` spawn, lock the spec. Frozen set: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md`, plus any delta docs as they are created.
+Before the first `implementer` spawn, lock the spec. Frozen set: `exploration.md`, `requirements.md`, `design.md`, `design-eli5.md`, plus any delta docs **as they are approved** — a delta is a draft, and outside the frozen set, until its gate clears it (see **delta review**).
 
 - Commit the frozen artifacts (the spec-freeze commit). Record its hash as `freeze`. Untracked/scratch working dir or no-VCS: record a checksum of each frozen file instead of a commit.
 - From here on these files are immutable. No agent revises them in place; you never edit them yourself.
@@ -194,8 +196,30 @@ A requirements or design change needed after freeze? Never touch the frozen doc.
 - Design change → fresh `designer` writes `design-delta-<N>.md` (N = 1, 2, …), referencing `design.md` + prior deltas.
 - Requirements change → fresh `requirements-refiner` writes `requirements-delta-<N>.md`, same shape.
 - Effective spec = original + deltas in order. Wherever you pass `design path` / `requirements path` downstream (implementer, reviewers, judge, eli5), also pass every delta path in order.
-- A post-freeze design delta surfaced to the user → fresh `eli5-explainer` renders a NEW `design-eli5-delta-<N>.md` (never overwrite the frozen eli5).
-- A delta doc joins the frozen set once written (commit / checksum it); it is then immutable too — further changes are higher-numbered deltas.
+- **You never decide a delta is needed.** You have read nothing, so you cannot. A delta is triggered by an implementer's `CLARIFICATION-NEEDED` reply (step 24) or by explicit user direction — never by your own read of a situation.
+- **Every delta runs the delta-review chain and a user gate before any agent implements against it** (see **delta review**). A delta doc is a *draft* until then, editable in place by its author responding to review.
+- A delta doc joins the frozen set once its gate approves it (commit / checksum it); it is then immutable too — further changes are higher-numbered deltas, each with its own delta review.
+
+### delta review — every post-freeze spec delta
+
+A delta changes the spec. The spec got adversarial review, a judge, an ELI5, and a human gate before implementation started; a delta gets the same, because the code gets built against the effective spec and nothing downstream re-litigates it. The pre-pass scope lane treats a delta as authority — it is exactly what turns "undesigned drift" into "designed work" — so an unreviewed delta doesn't just skip a check, it disarms one.
+
+The design-review round counter `R` **continues across the freeze** — it never resets. Design review ended at `R`=2 → delta 1's review is `R`=3, delta 2's is `R`=4, a post-gate re-review bumps again. (This is the design-phase `R`. The implementation round `R` is a separate counter that happens to share a letter — don't cross them.) Artifacts use the existing `design` phase name; no new vocabulary.
+
+D1. Fresh `designer` mode "delta". Pass: frozen design path + all prior delta paths, requirements path (+ its deltas), exploration path, the change-input path (the clarification doc, user-notes file, or escalation doc that triggered this), target `design-delta-<N>.md`.
+D2. Bump the design-review `R`. Fresh `design-reviewer`. Pass: delta path, frozen design path + prior deltas, requirements path (+ deltas), exploration path, the change-input path, target `notes-design-design-reviewer-r<R>.md`.
+D3. Fresh `designer` mode "respond, round 1". Pass: delta path, frozen design path + prior deltas, requirements + exploration paths, working dir, notes path, target `dispositions-design-r<R>-a1.md`.
+D4. Fresh `judge` round 1. Pass: notes path, dispositions path, delta path, frozen design path + prior deltas, working dir, target `judge-verdict-design-r<R>-a1.md`.
+D5. REWORK → fresh designer "respond, rework" (target `dispositions-design-r<R>-a2.md`) + fresh judge "round 2 — APPROVED or ESCALATE only" (target `judge-verdict-design-r<R>-a2.md`). ESCALATE → surface the verdict path at the gate below.
+D6. APPROVED → fresh `eli5-explainer`. Pass: delta path, frozen design path + prior deltas, requirements + exploration paths, target `design-eli5-delta-<N>.md` (never overwrite the frozen eli5).
+
+**Gate — user delta approval.** STOP. Surface the delta path + `design-eli5-delta-<N>.md` path (+ verdict path if ESCALATE) in ≤2 lines, end turn. Judge APPROVED ≠ user approval. User feedback takes the same three forms as the design gate (step 20) — in-place edits to the *delta* (still a draft), a separate notes doc, or chat directives you write verbatim to `notes-design-user-r<R>.md` — applied the same way, bumping `R` first, regenerating the eli5 delta if the delta changed. Loop the gate.
+
+Only after the user approves: freeze the delta (commit / checksum), then pass it downstream. This gate lands mid-implementation and pauses it. That is intended — implementation waits on a human whenever the spec moves.
+
+**Requirements delta:** same chain with the requirements cast — `requirements-refiner` mode "delta" and mode "respond", `requirements-reviewer`, targets `notes-requirements-requirements-reviewer-r<R>.md` / `dispositions-requirements-r<R>-a<A>.md` / `judge-verdict-requirements-r<R>-a<A>.md` on the continued requirements-review `R`. No eli5 step; the gate is the same.
+
+**One exception to the gate:** the ship-gate's mid-flow user revision path (after step 41). The user is already directing that change and re-entry to the ship-gate is itself the human gate — run D1–D6, skip the separate delta gate.
 
 ### implement (incremental rounds)
 
@@ -203,7 +227,7 @@ Log path: `implementation-log.md` (append-only across all rounds). Track a **rou
 
 **A round closes on lines or on count, whichever comes first — 5 increments is the ceiling, not the target.** A round's budget is **under 4,000 added lines** (insertions since the round base; deletions never count — same metric as the watchdog). Five increments is simply the most a round may contain. Big increments exhaust the line budget first, and that is the normal case: three 1,100-line increments close a round just as properly as five 400-line ones. At or near 4k, close the round and review — a round nobody can review is worse than a round with fewer increments in it.
 
-21. Spawn fresh `implementer` mode "incremental", **always with `run_in_background: true`** (see **Implementer watchdog** — you must stay awake to police its scope). Pass: design path (+ any delta paths), requirements path, working dir, log path, round base, current HEAD. Nothing about scope — the implementer picks its own slice from the design and the log; that is its job and you have read neither.
+21. Spawn fresh `implementer` mode "incremental", **always with `run_in_background: true`** (see **Implementer watchdog** — you must stay awake to police its scope). Pass: design path (+ any delta paths), requirements path, working dir, log path, round base, current HEAD, clarification target `clarification-needed-r<R>-i<this increment's ordinal>.md`. Nothing about scope — the implementer picks its own slice from the design and the log; that is its job and you have read neither.
     - Arm the first watchdog tick immediately.
 22. Implementer commits its increment. Reply: `done` | `in progress` + HEAD + log path. Verify the frozen set (see **freeze**). Run the **comment sweep**. Increment the counter. Measure the **round total** — added lines from round base to current HEAD: `git diff --numstat <round base> HEAD | awk '{s+=$1} END {print s+0}'` (insertions only; skip workflow artifacts and docs). (Watchdog-terminated implementer → **Implementer watchdog**, not this step.)
 23. Route on the reply (check `done` first):
@@ -211,7 +235,7 @@ Log path: `implementation-log.md` (append-only across all rounds). Track a **rou
     - `in progress` AND counter = 5 → **intermediate round**: run the review round. Its final APPROVED → intermediate squash, then a fresh round.
     - `in progress` AND round total ≥ ~3,500 added lines → **close the round early**: same intermediate round, at whatever increment count you reached. Don't spend a 6th-increment's worth of budget to hit an increment number. Judgment, not arithmetic: at 3,600 with an increment likely to add 800, close now; at 2,900 with room to spare, continue.
     - `in progress`, counter < 5, round total comfortably under budget → loop step 21 (next increment, same log path).
-24. Clarification-needed doc → fresh designer writes `design-delta-<N>.md` (never revises frozen `design.md`) + fresh implementer (pass design path + all delta paths; see **spec deltas**). Toolchain stop → escalate to user. Hook-failure doc (implementer stopped with work uncommitted because pre-commit hooks failed and the design declared no such intermediate state) → escalate to user; never direct any agent to commit with `--no-verify`.
+24. Implementer reply `CLARIFICATION-NEEDED` + clarification path → the spec is about to change, so it goes through **delta review** in full: D1–D6 *and* the user gate, same as any other design change. Only after the user approves the delta do you resume implementation — loop step 21 as a normal next increment (background, watchdog, same log path), now passing the new delta path along with the design and prior deltas. Never re-spawn an implementer against an un-reviewed or un-gated delta — a delta authored from the implementer's own complaint and handed straight back to it is how the design quietly becomes whatever the implementer wanted to write, with the pre-pass scope lane then blessing it. The round pauses here; the increment counter and round base don't move (nothing was committed). Toolchain stop → escalate to user. Hook-failure doc (implementer stopped with work uncommitted because pre-commit hooks failed and the design declared no such intermediate state) → escalate to user; never direct any agent to commit with `--no-verify`.
 
 ### Implementer watchdog
 
@@ -284,7 +308,7 @@ No-VCS working dir has no commits to squash: run each round's review on the work
 40. User approves squash → you squash to the **original base** with a clean message (mechanical git), folding every round + the freeze commit into one commit.
 41. Push: separate, explicit user authorization for named repo + branch. "Approved squash" ≠ "approve push".
 
-Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user-<K>.md` verbatim, `K` = 1, 2, … per revision batch — never reuse a prior file): if the revision changes the design or requirements (not just code), first capture it as a delta doc (fresh designer → `design-delta-<N>.md` / fresh refiner → `requirements-delta-<N>.md`; frozen docs never edited) before the implementer; code-only changes go straight to the implementer. Each revision cycle bumps `R` (a new review pass — its dispositions/verdict/notes use the new `R`). Then: fresh implementer respond + commit → re-check the frozen set → comment sweep → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path + delta paths to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
+Mid-flow user revisions (notes doc → use user path; chat directives → write to `notes-shipgate-user-<K>.md` verbatim, `K` = 1, 2, … per revision batch — never reuse a prior file): if the revision changes the design or requirements (not just code), first run it through **delta review** (D1–D6; frozen docs never edited; the ship-gate re-entry is the human gate, so no separate delta gate) before the implementer; code-only changes go straight to the implementer. Each revision cycle bumps `R` (a new review pass — its dispositions/verdict/notes use the new `R`). Then: fresh implementer respond + commit → re-check the frozen set → comment sweep → fresh judge with user-notes path + dispositions + diff. Pre-pass/deep re-runs opt-in; if requested, pass user-notes path + delta paths to reviewers so they do not override user. Re-enter ship-gate. Chat note: agent re-review post-user is opt-in.
 
 ### todo burndown (alternate entry)
 
@@ -337,12 +361,13 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Comment standard is enforced by direct rewrite, not findings: a fresh `comment-rewriter` follows every implementer commit, edits comments only, and lands its own commit.
 - Deep review is sequential waves, not one parallel fan: citizen first (structural findings reshape code), then tracer + test over the near-final code including wave-1 fixes; the judge scans whatever the last respond left unreviewed. Waves are blind to each other's notes.
 - Spec freeze: at implementation start, `exploration.md` / `requirements.md` / `design.md` / `design-eli5.md` are committed (or checksummed) and frozen. Post-freeze they are immutable — revisions go in new `*-delta-<N>.md` docs that reference the originals and record only the delta; effective spec = original + deltas. Re-verify the frozen set is unchanged after every implementer commit and after each intermediate squash; a modified frozen doc halts the workflow.
+- **A delta is a spec change and gets the full spec treatment** — reviewer → responder → judge → eli5 → user gate — before any agent implements against it (see **delta review**). No shortcut for "it's only a clarification": you cannot tell a local clarification from a redesign, because you have not read either. You never originate a delta; only an implementer's `CLARIFICATION-NEEDED` or explicit user direction does.
 - Every implementer increment/revision = a commit. Intermediate-round squashes (between review rounds) are automatic internal checkpoints — no user gate. The ship-squash (final round, to the original base) happens only after user approval.
 - No mid-flow pushes. Ever. Push only on separate explicit authorization for named repo + branch.
 - No force-push. Push fails on remote ahead → escalate.
 - Adversarial reviewers, responders, judge.
 - User arbitrates ESCALATE.
-- Approval gates separate: requirements, design, squash, push. Each requires its own explicit user word.
+- Approval gates separate: requirements, design, every post-freeze spec delta, squash, push. Each requires its own explicit user word.
 - Once a stage is human-reviewed, agent re-review on revision is opt-in. User notes (in-place artifact edits, user-supplied doc path, or chat directives you wrote verbatim to file) always travel to authors + reviewers + judge so agents cannot override user.
 - Stage-boundary updates ≤2 lines.
 
@@ -353,6 +378,8 @@ Judge verdict per disputed item: APPROVED / REWORK / ESCALATE. Round 2 = no REWO
 - Spawn designer (design stage) without separate user go-ahead post-requirements.
 - Read any artifact into your context.
 - Edit a frozen artifact post-freeze, or let any agent do so. Revisions go in new `*-delta-<N>.md` docs. A modified frozen doc halts the workflow until restored.
+- Spawn an implementer against a delta that has not cleared delta review **and** the user gate. No exception for clarification-needed — that is the case the gate exists for.
+- Decide on your own that the spec needs changing. Deltas come from `CLARIFICATION-NEEDED` or the user, never from you.
 - Restate rubrics in prompts.
 - Tell a subagent what to look at, check, focus on, or worry about. Hardest rule in this file, and it binds tightest on reviewers and the judge. Paths, hashes, mode, round — then stop.
 - Offer an opinion in a prompt about the code, the design, the difficulty, the risk, or the likely findings. You have not read any of it.

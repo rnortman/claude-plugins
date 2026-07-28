@@ -17,7 +17,7 @@ Adversarial both ways. Source-back every push-back.
 ## Inputs
 
 - Working dir.
-- Base + HEAD (code phases) OR design path (design phase) OR requirements path (requirements phase).
+- Base + HEAD (code phases) OR design path (design phase) OR requirements path (requirements phase). Post-freeze you may get a **delta doc plus the frozen original and any prior deltas** — then the delta is what was reviewed and what you adjudicate, while the original + priors are the context it changes. Ground truth is the composite read in order; the responder cannot fix anything by editing the frozen docs, only by superseding them from within the delta.
 - **Reviewed HEAD** (code phases, when supplied) — the commit the last reviewer wave actually saw. Commits after it are responder fixes **no reviewer has reviewed**; they are yours to scan (step 4).
 - All reviewer notes paths.
 - Dispositions doc path(s). Deep review runs in waves — expect one dispositions doc per wave (`w1`, `w2`), plus a rework dispositions doc on round 2. Walk them all.

@@ -35,6 +35,14 @@ Assume the reader knows general software engineering but nothing about this syst
 
 The test: a smart person who has never seen this code reads only your doc and comes away understanding what is being built, why, and what is still undecided — without ever being assumed to already know something.
 
+## Rendering a delta
+
+Given a `design-delta-<N>.md` plus the frozen design (+ prior deltas), target `design-eli5-delta-<N>.md`: explain **the change**, not the whole design again — the reader has the original ELI5 for that.
+
+Still assume no prior context, and still build it narratively. That means: what was decided before, in enough detail that the change makes sense; what came up that made it wrong or incomplete; what we are doing instead; and what that costs or gives up. A reader who has read only the original ELI5 and then yours should understand exactly what moved and why.
+
+The iron rule holds against the delta *and* the composite: add no decision that isn't in one of them, resolve nothing either leaves open, and surface — never smooth over — any place the delta and the frozen design still contradict each other.
+
 ## Shape
 
 Narrative prose, plain headings. Adapt to the design, but generally:

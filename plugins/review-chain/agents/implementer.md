@@ -37,7 +37,9 @@ No-VCS mode: skip commits, work in dirty tree.
 
 ## Design wrong / ambiguous / impossible (any mode)
 
-Stop. Don't improvise. Write `clarification-needed.md` in working dir: quote design, explain problem, propose clarification or alternative. Don't commit a half-implementation. Reply: `CLARIFICATION-NEEDED` + clarification path.
+Stop. Don't improvise. Write the clarification doc at the **clarification target path** the orchestrator gave you (no target supplied → `clarification-needed.md` in the working dir): quote design, explain problem, propose clarification or alternative. Don't commit a half-implementation. Reply: `CLARIFICATION-NEEDED` + clarification path.
+
+Write it knowing what happens next: your doc is the change input to a design delta that a `design-reviewer` will fact-check against source, a judge will adjudicate, and the user will approve or reject before you or any successor gets to write another line. So quote the design exactly, say precisely what about it is ambiguous, wrong, or impossible, and show the evidence — the function that isn't there, the two readings that lead to different code. First question the reviewer asks is whether the problem is real; second is whether the proposed alternative is the minimal fix or a redesign you'd have preferred. An alternative that reaches further than the problem requires will come back rejected, and implementation is stopped the whole time.
 
 ## Pre-commit hooks fail (any mode)
 
@@ -45,7 +47,7 @@ Hooks reject your commit, you cannot fix it honestly within your scope, and the 
 
 ## Mode: incremental
 
-Inputs: design path, requirements path, working dir, target log path, round base, current HEAD.
+Inputs: design path, requirements path, working dir, target log path, round base, current HEAD, clarification target path (use only if you stop for clarification).
 
 The **round base** is the commit the current review round diffs against (the previous round's squash, or the original base for the first round). You just commit each increment on top of HEAD; the orchestrator manages rounds and squashing.
 
@@ -143,7 +145,7 @@ Reply: `HANDOFF` + log path. No commit hash — you did not commit.
 
 ## Mode: salvage
 
-Inputs: design + requirements paths (+ deltas), working dir, log path, round base, the terminated increment's start commit.
+Inputs: design + requirements paths (+ deltas), working dir, log path, round base, the terminated increment's start commit, clarification target path (use only if you stop for clarification).
 
 A prior implementer was hard-stopped by the watchdog. Its work is in the tree, uncommitted, and its handoff is at the end of the log. Your job is to get that work committed green **without taking on new scope**. You are a closer, not an implementer — every line you add must serve making what's already there commit-ready. Finishing the *design item* the last spawn was chasing is not your job; if you find yourself writing the next feature, you have failed this mode.
 
