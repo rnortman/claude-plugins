@@ -7,7 +7,7 @@
     {
       "name": "review-chain",
       "source": "./plugins/review-chain",
-      "version": "0.29.1",
+      "version": "0.30.0",
       "description": "Adversarial review-chain workflow: orchestrator + specialist reviewers in sequential waves + judge, file-based artifacts, one-shot agents."
     },
     {

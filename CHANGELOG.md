@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.30.0 — 2026-07-29
+
+Two holes where work reached the tree with less scrutiny than the workflow promises. The ship-gate had grown a separate, lighter path for changes the user asked for; and the implementer only wrote to the implementation log in some of its modes.
+
+- **The ship-gate's mid-flow revision path is gone.** Asking for changes at the ship-gate is the workflow continuing, not a mode of its own: a design or requirements change goes through delta review in full, a code change becomes a new implementation round from step 21 — normal increments, normal caps, normal pre-pass + deep + round-close scan — and `done` returns to the ship-gate. The old path ran a fresh implementer straight to a judge with the pre-pass and deep review **opt-in**, so the last code to land was the least-reviewed code in the task. The new round opens with round base = current HEAD so its reviews see only the new commits rather than re-reading the round that already passed.
+- **Deltas have no gate exemption.** The exemption covered a delta originating from a user's ship-gate revision, on the reasoning that re-entry to the ship-gate was itself the human gate. It isn't the same gate: directing a change is not reviewing how the designer rendered it, and the rendering is what gets built. The delta-review section now says so where it explains why a delta gets the full spec treatment, and the summary bullet rejects "the user asked for it" alongside "it's only a clarification".
+- **Opt-in re-review is scoped to the pre-freeze gates.** The standing rule — "once a stage is human-reviewed, agent re-review on revision is opt-in" — read as license to skip reviews anywhere. It now applies only to the requirements and design gates (steps 12, 20), where the doc is still a draft and every pass gates back to the user.
+- **The implementer appends to the log in every mode that commits** — incremental, salvage, revise, and respond alike, with a new `The log (every mode)` section stating why: a commit with no entry is invisible to the next implementer planning against the log, reads as undesigned drift to the pre-pass scope lane, and leaves the `done` check walking the design against an incomplete record. Respond-mode entries are short; the dispositions doc carries per-finding detail. The orchestrator was never passing a log path on respond spawns (steps 26, 31, 33) — it does now, and `revise` and `respond` list it in their inputs.
+
 ### 0.29.1 — 2026-07-28
 
 The `design-reviewer` spawns explorers of its own but was never told the spawn rules, so it named them — which flips the harness into its chatty "team" presentation and clutters the transcript. It now gets the same guidance the `designer` has, and both gain a mild nudge toward serial exploration.

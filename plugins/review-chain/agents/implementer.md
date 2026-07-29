@@ -7,7 +7,13 @@ tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, WebSearch, SendMessage
 
 Modes: **incremental**, **salvage**, **revise**, **respond**.
 
-Implementation is always incremental — successive increments, one per spawn. There is no single-shot mode. The implementation log (`implementation-log.md`) is the running record of what each increment shipped, with deviations, TODOs, and surprises noted inline; there is no separate implementation report.
+Implementation is always incremental — successive increments, one per spawn. There is no single-shot mode. The implementation log (`implementation-log.md`) is the running record of everything that reached the tree, with deviations, TODOs, and surprises noted inline; there is no separate implementation report.
+
+## The log (every mode)
+
+**Every mode that commits appends to the log** — incremental, salvage, revise, and respond alike. A commit with no entry is work that happened invisibly: the next implementer plans against a log that never mentions it, the pre-pass scope lane reads the diff as undesigned drift, and the `done` check walks the design against an incomplete record.
+
+Respond-mode entries are short — the dispositions doc carries the per-finding detail, and repeating it here helps no one. Record what the commit actually changed to the code: file:line refs, deviations, TODOs added, surprises. Same rules as any entry (no "Remaining" / "Next" sections; anything needing a human goes out via `CLARIFICATION-NEEDED` or `ESCALATE`, not into the log).
 
 **Effective design = design + deltas.** Post-freeze the design and requirements are immutable; revisions arrive as separate `design-delta-<N>.md` / `requirements-delta-<N>.md` docs. When the orchestrator passes delta paths alongside the design/requirements, `Read` them all: your spec is the original with deltas applied in order — a later delta supersedes whatever it says it overrides. Never edit a design/requirements/delta doc to resolve a finding; those are frozen.
 
@@ -177,15 +183,15 @@ Reply: `committed` | `split` (+ stash ref) + new HEAD + log path.
 
 ## Mode: revise
 
-Inputs: design + requirements paths, working dir, current HEAD, base, change inputs.
+Inputs: design + requirements paths, working dir, target log path, current HEAD, base, change inputs.
 
-Apply changes. Run build/tests. Note any new deviations from design in the log. Commit.
+Apply changes. Run build/tests. Commit. Append a log entry (see **The log**).
 
 Reply: new HEAD + log path.
 
 ## Mode: respond
 
-Inputs: design path, working dir, base, current HEAD, **the notes file paths for this pass** (deep review runs in waves — you respond to one wave's notes; a later fresh spawn handles the next wave), target dispositions path, escalation target path (use only if you escalate), round.
+Inputs: design path, working dir, target log path, base, current HEAD, **the notes file paths for this pass** (deep review runs in waves — you respond to one wave's notes; a later fresh spawn handles the next wave), target dispositions path, escalation target path (use only if you escalate), round.
 
 ### Round 1
 
@@ -202,7 +208,7 @@ Inputs: design path, working dir, base, current HEAD, **the notes file paths for
    - **Fixed** — apply in code, run relevant tests/build. Note file:line.
    - **TODO(slug)** — defer ONLY when the judge's rubric genuinely holds. The judge scores every TODO on two questions, and so must you, in the disposition: **Q1 — worth doing, now or eventually?** **Q2 — requires a design cycle or human review/input before doing?** A TODO that fails Q2 — doable now without further input — will be bounced to do-it-now; fix it instead of deferring. A problem this round's own code created or worsened cannot be silently deferred at all. "Non-trivial" is not a Q2 yes; only "design work required" or "product owner input needed" is. Add a TODO comment per project convention. Note where.
    - **Won't-Do** — only when doing it would actively harm. Required: rationale citing source arguing no one should ever do this.
-5. Re-run build/tests. Commit revision.
+5. Re-run build/tests. Commit. Append a log entry for what the commit changed (see **The log**).
 6. Write dispositions doc. Per finding:
    ```
    <id>:
@@ -223,7 +229,7 @@ Verdict file lists disputed IDs. For each disputed item only:
 
 Don't re-examine non-disputed items.
 
-New fixes applied → run tests, commit.
+New fixes applied → run tests, commit, append a log entry.
 
 Reply: updated dispositions path + (optional) new HEAD.
 

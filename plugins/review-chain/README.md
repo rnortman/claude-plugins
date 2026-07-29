@@ -24,7 +24,7 @@ The result is a workflow you can actually follow on a ten-finding review without
 - **explorer** — Surveys the codebase for context relevant to the request. Cites source code only, never design docs.
 - **requirements-refiner** — Enriches the user's brief request with codebase context from the exploration, resolves ambiguities, and flags tensions between the request and the codebase. Output is "a better prompt" in ELI5-style prose, not a formal spec. Also acts as the responder in requirements review.
 - **designer** — Writes the initial design doc; also acts as the responder in design review. Self-cleans drafts via the `cleanup-editor` skill.
-- **implementer** — Writes code per the approved design in incremental slices (incremental is the only mode), runs build/tests, commits each increment, and keeps an append-only implementation log; also acts as the responder in code review.
+- **implementer** — Writes code per the approved design in incremental slices (incremental is the only mode), runs build/tests, commits each increment, and keeps an append-only implementation log — every mode that commits appends to it, review-response fixes included; also acts as the responder in code review.
 
 ### Review specialists
 
@@ -131,7 +131,9 @@ You drive by responding at gates. Between gates, subagents run and write artifac
 - **Edit the artifact in place** — for answering open questions; the orchestrator hands your edited file to a fresh author.
 - **Brief chat directives** — one or two specific instructions; the orchestrator writes them verbatim to a notes file (numbered if multiple) for the record.
 
-After your review, agent re-review on revision is **opt-in**. Default is: your notes go straight to a fresh author + fresh judge — no agent reviewers. Ask if you want a fresh agent reviewer; your notes will travel with it so it cannot override you.
+At the requirements and design gates — before implementation starts, while the doc is still a draft — agent re-review of the author's response to your notes is **opt-in**: your notes go straight to a fresh author + fresh judge, and you gate again. Ask if you want a fresh agent reviewer too; your notes travel with it so it cannot override you.
+
+Everywhere else, asking for changes continues the workflow: a design or requirements change becomes a delta that runs the full design chain and its own user gate, and a code change becomes a normal implementation increment reviewed by the normal round. You directed the change; you haven't yet seen how an agent rendered it, which is what the reviews and the gate are for.
 
 Escalations from the judge always surface to you as a doc; the orchestrator never resolves them.
 
