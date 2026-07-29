@@ -4,6 +4,13 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.30.1 — 2026-07-29
+
+Deletion only: the comment-rewriter's out-of-scope observations channel is removed. It was added in 0.26.0 to preserve a line of reply prose that release had banned, had no consumer (the orchestrator carried the path to the next gate without reading it), and was the only artifact with no `target` path — so the agent invented the filename and the location and wrote it to the repo root. Several adversarial reviewers read the same code after the sweep; that is where a bug gets caught.
+
+- **comment-rewriter:** `comment-sweep-observations-<HEAD>.md` deleted from the reply spec; the "note it in your reply" tails deleted from Scope and Rule 9.
+- **orchestrator:** the observations path and the carry-it-to-the-gate instructions deleted from the comment-sweep paragraph.
+
 ### 0.30.0 — 2026-07-29
 
 Two holes where work reached the tree with less scrutiny than the workflow promises. The ship-gate had grown a separate, lighter path for changes the user asked for; and the implementer only wrote to the implementation log in some of its modes.
