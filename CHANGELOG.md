@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.30.2 — 2026-08-05
+
+An implementer's `CLARIFICATION-NEEDED` is a stop, and step 24 never said so. It named the delta chain and the gate at the end of it, while every other escalation point in the file reads "STOP. Surface escalation path." — so driving straight from the clarification into a delta designer, without the user seeing the questions first, was a defensible reading. It shouldn't be: a clarification doc is questions, and the orchestrator has read neither them nor the design, so it cannot tell which ones need a human's answer rather than a designer's. This is the requirements phase's rule (step 6: refiner's doc is questions, surface as-is, skip the chain) one phase later.
+
+- **orchestrator step 24:** stops explicitly — surface both paths, end the turn, spawn no designer; the delta chain runs only on user direction.
+- **delta review:** entry is never automatic, and never in the same turn as the stop that prompted it.
+- Two bullets said a `CLARIFICATION-NEEDED` "triggers a delta" — the phrasing that licensed the wrong reading. It triggers a stop; the user says whether a delta follows. New **Never** entry for starting the chain in the same turn as the stop.
+
 ### 0.30.1 — 2026-07-29
 
 Deletion only: the comment-rewriter's out-of-scope observations channel is removed. It was added in 0.26.0 to preserve a line of reply prose that release had banned, had no consumer (the orchestrator carried the path to the next gate without reading it), and was the only artifact with no `target` path — so the agent invented the filename and the location and wrote it to the repo root. Several adversarial reviewers read the same code after the sweep; that is where a bug gets caught.
