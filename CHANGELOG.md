@@ -4,6 +4,16 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.31.0 — 2026-08-09
+
+`review-chain:` agent spawns are forced into the background, so a parent is notified on completion instead of blocking. The policy lives in `model-override` rather than a new hook, because a `PreToolUse` hook's `updatedInput` replaces the whole tool input and the last hook to answer wins — Claude Code hands every hook the original input and never chains them. Two hooks rewriting one spawn would silently clobber each other. That is why the hooks are split by *agent type* (`intercept-explore` owns `Explore`, `model-override` owns everything else) and not by concern, and why the next spawn-rewriting policy also belongs inside an existing hook.
+
+- **model-override:** new `REVIEW_CHAIN_BACKGROUND_HOOK` — unset forces `run_in_background: true`; `off`/`0`/`false`/`disable`/`none` leaves it alone; `sync` forces `false`. Scoped to `subagent_type` values prefixed `review-chain:`, so built-in and third-party agents keep harness defaults. `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` wins, since it strips `run_in_background` from the `Agent` schema outright.
+- **model-override:** the early exit on a spawn that already carried an explicit model is gone — it would have dropped the background rewrite. An explicit model now skips only the config lookup, and the spawn is still rewritten.
+- **model-override:** a background-only rewrite returns `updatedInput` with no `permissionDecision`. The hook previously always answered `"allow"`, which auto-approves the spawn; extending that to every review-chain spawn would have widened permissions as a side effect. Model overrides keep `"allow"`.
+- **model-override:** no-op rewrites emit nothing, so the hook stays silent when it would change nothing. With `REVIEW_CHAIN_BACKGROUND_HOOK=off` the hook's behavior is unchanged from 0.30.2.
+- **intercept-explore:** untouched. `Explore` is a built-in, so the `review-chain:` scope never reaches it.
+
 ### 0.30.2 — 2026-08-05
 
 An implementer's `CLARIFICATION-NEEDED` is a stop, and step 24 never said so. It named the delta chain and the gate at the end of it, while every other escalation point in the file reads "STOP. Surface escalation path." — so driving straight from the clarification into a delta designer, without the user seeing the questions first, was a defensible reading. It shouldn't be: a clarification doc is questions, and the orchestrator has read neither them nor the design, so it cannot tell which ones need a human's answer rather than a designer's. This is the requirements phase's rule (step 6: refiner's doc is questions, surface as-is, skip the chain) one phase later.

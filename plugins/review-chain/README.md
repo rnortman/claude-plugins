@@ -78,7 +78,9 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
 
   Set it in any shell or project where you want different behavior, e.g. `export REVIEW_CHAIN_EXPLORE_HOOK=off`. The hook fails open: if `jq` is missing or the input can't be parsed, it does nothing and the spawn proceeds unmodified.
 
-- **model-override** (`PreToolUse`) — Re-pins the model an agent runs on **without editing its agent file or publishing a new plugin version**. Every agent's model is normally pinned in its definition (`implementer` → Sonnet, the deep reviewers → Opus, etc.); this hook lets you override those pins per-project or per-shell. It fires on every agent spawn and resolves a model by precedence (first hit wins):
+- **model-override** (`PreToolUse`) — Owns the spawn input for every agent except `Explore`, applying two independent policies: **model override** and **background policy**.
+
+  *Model override* re-pins the model an agent runs on **without editing its agent file or publishing a new plugin version**. Every agent's model is normally pinned in its definition (`implementer` → Sonnet, the deep reviewers → Opus, etc.); this hook lets you override those pins per-project or per-shell. It resolves a model by precedence (first hit wins):
 
   | Priority | Source | Example |
   | :--- | :--- | :--- |
@@ -93,6 +95,18 @@ The responder writes a dispositions doc keyed by finding ID. Per finding: **Fixe
   To set up the config file, run **`/configure-models`** (see Skills below). It reads every agent's current pin and writes a fully-commented template — all lines commented out, so it overrides nothing until you edit it — and can also activate specific overrides for you (e.g. "set implementer to opus"). Use `/configure-models --project` or `--user` to choose the destination.
 
   Config format is one `agent = model` per line (`#` comments and blank lines ignored; `* = model` applies to every agent; a value of `inherit`/`default`/`-`/empty means "no override"). The built-in `Explore` agent is handled by `intercept-explore` above, not this hook. Fails open like the other hook.
+
+  *Background policy* forces `run_in_background` on spawns whose `subagent_type` starts with `review-chain:`, so the parent is notified on completion instead of blocking. Built-in and third-party agents keep the harness defaults. Controlled by `REVIEW_CHAIN_BACKGROUND_HOOK`:
+
+  | Value | Effect |
+  | :--- | :--- |
+  | *(unset)* | **Default.** Force `run_in_background: true`. |
+  | `off` (also `0`, `false`, `disable`, `none`) | Leave `run_in_background` alone. |
+  | `sync` | Force `run_in_background: false` — every review-chain spawn blocks. |
+
+  Recent Claude Code builds already background subagents by default, so what this buys you is *pinning* the behavior: an agent that explicitly passes `run_in_background: false` gets overridden. Setting `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` wins over this hook — that flag removes `run_in_background` from the `Agent` schema entirely, so the policy is skipped.
+
+  **Why both policies share one hook.** A `PreToolUse` hook's `updatedInput` replaces the *whole* tool input, and when several hooks answer for the same call the last one wins — Claude Code hands every hook the original input and never chains them. Two hooks each returning `updatedInput` for one spawn would silently clobber each other. So the hooks are split by *agent type*, not by concern: `intercept-explore` owns `Explore`, `model-override` owns everything else, and any new spawn-rewriting policy goes inside one of them rather than into a third hook.
 
 ## Workflow shape
 
