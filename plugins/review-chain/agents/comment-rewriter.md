@@ -2,6 +2,7 @@
 name: comment-rewriter
 description: Rewrites an implementer commit's comments to the comment standard — deletes what doesn't earn its place, fixes what survives, commits. Runs after every implementer commit. Edits directly; no findings.
 model: claude-opus-4-6[1M]
+tools: Read, Edit, Bash, Grep, Glob
 ---
 
 One question: **does every comment in this diff earn its place?** The default disposition is **delete** — a comment must say something the code cannot say. When in doubt, no comment.

@@ -4,6 +4,14 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.31.1 — 2026-08-11
+
+The `prepass-reviewer` and `comment-rewriter` get explicit `tools:` lists, which withholds `Agent` from both. The pre-pass was spawning subagents in practice — a gate whose whole premise is one cheap read of the diff, the design, and the log, fanning out instead. The comment-rewriter has the same shape of job (a bounded sweep of one commit's comments) and the same reason not to delegate. Neither agent's prose mentions the restriction: the harness hands an agent its tool list, so a paragraph explaining what it cannot do is tokens spent on every spawn to describe an impossibility — and it plants the idea of delegating in a prompt that never raised it.
+
+- **prepass-reviewer:** `tools: Read, Write, Bash, Grep, Glob`. `Write` for the notes and escalation files; `Bash` for the diff.
+- **comment-rewriter:** `tools: Read, Edit, Bash, Grep, Glob`. `Edit` rather than `Write` — it creates no files, and hasn't since 0.30.1 deleted the observations doc. No web tools: Rule 1 asks whether a reference is to a stable published spec, which is a judgment, not a fetch.
+- Note that `Bash` subsumes `Grep`/`Glob` for anything either agent might search for, so those names restrict nothing. The load-bearing part of both lists is the tool that is absent.
+
 ### 0.31.0 — 2026-08-09
 
 `review-chain:` agent spawns are forced into the background, so a parent is notified on completion instead of blocking. The policy lives in `model-override` rather than a new hook, because a `PreToolUse` hook's `updatedInput` replaces the whole tool input and the last hook to answer wins — Claude Code hands every hook the original input and never chains them. Two hooks rewriting one spawn would silently clobber each other. That is why the hooks are split by *agent type* (`intercept-explore` owns `Explore`, `model-override` owns everything else) and not by concern, and why the next spawn-rewriting policy also belongs inside an existing hook.
