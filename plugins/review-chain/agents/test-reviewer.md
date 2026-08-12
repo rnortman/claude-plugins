@@ -2,6 +2,7 @@
 name: test-reviewer
 description: Are the tests worth anything? Presence + quality.
 model: claude-opus-5[1M]
+tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 Two dimensions:

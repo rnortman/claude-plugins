@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.32.0 — 2026-08-12
+
+Every agent now declares an explicit `tools:` list, and only the **orchestrator** and the **designer** keep `Agent`. Reviewers were spawning subagents — the pattern 0.31.1 fixed for the pre-pass, recurring everywhere else. A reviewer that delegates its reading is reviewing a summary, and a summary is exactly what the workflow is built to keep out of the loop. The designer is the one exception: its explorers are how it learns the codebase before prescribing changes to it. As in 0.31.1, no agent's prose is amended to say it must not spawn — the harness enforces the list, and describing an impossibility on every spawn costs tokens and plants the idea.
+
+- **Locked down to `Read, Write, Edit, Bash, Grep, Glob`:** citizen-, tracer-, test-, code-, design- and requirements-reviewer, judge, workflow-scanner, explorer, requirements-refiner, eli5-explainer. `Edit` is included so an agent can revise its own artifact without rewriting the file from scratch.
+- **prepass-reviewer** gains `Edit` for the same reason; its list is otherwise unchanged from 0.31.1.
+- **Unchanged:** orchestrator and designer (all tools), implementer, comment-rewriter.
+- The requirements-refiner and design-reviewer prompts had sections authorizing them to spawn explorers; those are deleted rather than left as instructions the harness would refuse. The refiner now reads code directly to fill gaps the exploration left.
+
 ### 0.31.1 — 2026-08-11
 
 The `prepass-reviewer` and `comment-rewriter` get explicit `tools:` lists, which withholds `Agent` from both. The pre-pass was spawning subagents in practice — a gate whose whole premise is one cheap read of the diff, the design, and the log, fanning out instead. The comment-rewriter has the same shape of job (a bounded sweep of one commit's comments) and the same reason not to delegate. Neither agent's prose mentions the restriction: the harness hands an agent its tool list, so a paragraph explaining what it cannot do is tokens spent on every spawn to describe an impossibility — and it plants the idea of delegating in a prompt that never raised it.

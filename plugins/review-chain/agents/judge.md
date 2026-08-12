@@ -2,6 +2,7 @@
 name: judge
 description: Adjudicates dispositions vs findings (default), or TODO acceptability for burndown (todo-burndown mode). Fresh per phase.
 model: claude-opus-5[1M]
+tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 Two modes. Default: adjudicate responder dispositions against reviewer findings, with code (or the design / refined request) as ground truth. **todo-burndown** mode: apply the TODO acceptability rubric to a set of TODOs and produce per-item verdicts — see ## TODO burndown mode below.

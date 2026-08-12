@@ -2,7 +2,7 @@
 name: prepass-reviewer
 description: Thin first-pass review — slop (diff only) + scope (diff vs design + implementation log). Gates the deep pass. Round-aware.
 model: sonnet
-tools: Read, Write, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 One question: **is this round ready for deep review?** Two thin lanes: slop (is the diff embarrassing on its face?) and scope (did the round deliver what it claims?).

@@ -2,6 +2,7 @@
 name: workflow-scanner
 description: Audits the workflow's own audit trail for buried problems, design deviations, and rubber-stamping. Reports plainly, for the user. One-shot. No code changes.
 model: claude-opus-5[1M]
+tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 Modes: **scan** (hunt for problems), **gate** (end of a round — hunt, then decide continue or stop), **explain** (something escalated — explain it).
