@@ -4,6 +4,12 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.32.1 — 2026-08-16
+
+The `comment-rewriter`'s remote-internals rule (Rule 3) gets a carve-out for comments that reference a *documented* contract. The rule's default disposition is delete, and it was taking legitimate pinning comments with it — where a single source of truth isn't possible and two enums or constants have to be kept in lockstep, each side saying so is the mechanism, not rot.
+
+- **comment-rewriter:** apply the rot test before rewriting. A remote reference is acceptable when the remote behavior is part of its documented contract, or when both sides note they are not the sole source of truth and/or a test pins the equivalence. Those comments stay.
+
 ### 0.32.0 — 2026-08-12
 
 Every agent now declares an explicit `tools:` list, and only the **orchestrator** and the **designer** keep `Agent`. Reviewers were spawning subagents — the pattern 0.31.1 fixed for the pre-pass, recurring everywhere else. A reviewer that delegates its reading is reviewing a summary, and a summary is exactly what the workflow is built to keep out of the loop. The designer is the one exception: its explorers are how it learns the codebase before prescribing changes to it. As in 0.31.1, no agent's prose is amended to say it must not spawn — the harness enforces the list, and describing an impossibility on every spawn costs tokens and plants the idea.

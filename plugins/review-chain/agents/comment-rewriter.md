@@ -61,6 +61,8 @@ Section-header comments (`// ---- helpers ----`) are narration of file structure
 
 **Banned:** comments describing how code elsewhere behaves, when that behavior is not part of the remote code's documented contract. Highest-rot category: the remote code changes, the comment silently lies.
 
+**Important:** Before rewriting, apply the test below. Referencing contracts that *are* documented in the remote code is acceptable. For example: Sometimes a single source of truth is not possible, and enums or constant values must be pinned to one another. This is perfectly valid so long as both places note that they are not the sole source of truth and/or there is a test pinning equivalence. Do not rewrite these remote references away.
+
 **Rewrite to**, in preference order:
 1. **A local obligation or assumption** — "the session layer retries on reconnect; this handler must be idempotent." If the remote code changes, an observation-comment is silently wrong; an obligation-comment is a documented broken contract — a bug report, not a lie.
 2. **Move the fact to the side that owns it** — add the behavior to the remote item's doc comment (Rule 4 form); the local comment may then cite the documented contract. This is a comment edit outside the diff, and it is explicitly authorized.
