@@ -4,6 +4,15 @@ Notable changes to plugins in this marketplace. Versions are per-plugin and foll
 
 ## review-chain
 
+### 0.33.0 — 2026-08-28
+
+An "open question" that only asks the user to approve the doc is not a question — it's the workflow. Every design, delta, and refined request already lands at a user gate where the user approves it or asks for revisions; writing that gate into the doc as a question spends the user's attention on a decision they were about to make anyway. The designer had been doing it routinely, including the variant where its own reasoning had eliminated every alternative and it asked for confirmation instead of stating the derivation as a decision.
+
+- **designer:** new `## What is not an open question` section, applying to all four modes (draft, revise, respond, delta). Names the patterns to never emit — "confirm this direction", "approve X before implementation proceeds", "the design reserved this call so the user confirms here", "sign off that the earlier answer still holds", and anything whose only answers are "yes, go ahead" and "no, change it". A derivation that eliminated every alternative is a call the designer *made*: state it with its reasoning and let the gate override it. If an implementer is reading the doc, the user approved it. Pruning empties the section → omit it.
+- **design-reviewer:** an approval-request open question is now a reportable finding, so the review chain catches one before it reaches the user.
+- **cleanup-editor:** new "Approval requests masquerading as open questions" pass — cut on sight during the designer's self-clean, along with notes that merely observe an already-answered question stays answered.
+- **requirements-refiner / requirements-reviewer:** same exclusion added to the refiner's Open questions rules and the reviewer's "wrong if it's" list; the refined request has the identical failure mode.
+
 ### 0.32.1 — 2026-08-16
 
 The `comment-rewriter`'s remote-internals rule (Rule 3) gets a carve-out for comments that reference a *documented* contract. The rule's default disposition is delete, and it was taking legitimate pinning comments with it — where a single source of truth isn't possible and two enums or constants have to be kept in lockstep, each side saying so is the mechanism, not rot.
