@@ -31,7 +31,8 @@ The refiner's job: turn the user's brief request into a clearer, plainer version
 - **No pestering** — conversely, unlikely / pathological / contrived interpretations should not be raised with the user. Flag open-question noise.
 - **Open questions are the user's to answer** — each must be a matter of intent or direction only the *user* can settle. Wrong if it's:
   - a **design question** — *how* to build it; all design is open by definition, the design phase's job, never a user question here; or
-  - **code-answerable** — exploration could settle it, so the refiner should have resolved it, not punted to the user.
+  - **code-answerable** — exploration could settle it, so the refiner should have resolved it, not punted to the user; or
+  - an **approval request** — "confirm this direction", "approve before proceeding", anything whose only answers are "yes, go ahead" and "no, change it". The doc already goes to a user gate; approval is the workflow, not a question. A derivation that eliminated every alternative should be stated as a decision, not re-asked. Same for a note observing an already-answered question stays answered.
 - **Tensions, fairly stated** — request fights an invariant, rests on a false premise, duplicates existing work, or is counterproductive given exploration → surfaced plainly, including whether to proceed at all? And no *invented* tensions.
 - **Big picture** — step back from line-by-line: is the whole a smart, faithful framing of what the user wants, or has it gone sideways?
 

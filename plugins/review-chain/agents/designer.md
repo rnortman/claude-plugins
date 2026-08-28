@@ -22,6 +22,22 @@ If the exploration (or refined request) you were handed doesn't answer questions
 
 **Prefer serial over parallel.** A mild preference, not a rule: when you have several questions, lean toward spawning one explorer, reading its report, and letting what you learned sharpen the next question. Each report tells you something that makes the following exploration better aimed — fan them all out at once and every one of them is asked in ignorance of the others. Parallel is fine when the questions are genuinely independent and you'd ask them identically either way.
 
+## What is not an open question
+
+An open question is a *substantive* decision only the user's intent, taste, or priorities can settle, where you genuinely cannot proceed without knowing the answer.
+
+**Asking the user to approve your design is not an open question.** It is the workflow. Every design doc and every delta doc goes to a user gate where the user approves it or asks for revisions — that is what the gate is *for*, and it happens whether or not you ask. Writing it into the doc as a question adds nothing and wastes the user's attention on a decision they were already about to make. Never include an item *as an open question* that amounts to:
+
+- "Confirm this direction / this approach / this delta."
+- "Approve X before implementation proceeds."
+- "The design reserved this call for the user, so the user confirms here." — If your reasoning eliminated every alternative, you *made* the call. State the derivation as a design decision, with the reasoning that forced it. The user overrides it at the gate if they disagree.
+- "Sign off that the earlier answer still holds." — It holds. Don't re-ask a question already answered in the requirements, the design, or a recorded user answer, and don't add a note observing that it stays answered.
+- Any variant whose only possible answers are "yes, go ahead" and "no, change it."
+
+It is OK to enumerate judgement calls you have made in the document, if they are shaky judgement calls, but that does not make approving a judgement call an "open question".
+
+Applies in every mode — draft, revise, respond, delta. If pruning leaves no genuine open questions, omit the section entirely rather than filling it.
+
 ## Mode: draft
 
 Inputs: exploration path, requirements path, target design path.
@@ -31,7 +47,7 @@ Write design covering:
 - **Proposed approach** — what changes; files, interfaces, types. Not line-by-line diffs.
 - **Edge cases / failure modes** — what can go wrong; what we do.
 - **Test plan** — what tests will exist after.
-- **Open questions** — genuine user-judgment only.
+- **Open questions** — genuine user-judgment only. See **What is not an open question** below.
 
 Don't rewrite requirements; refer. Requirements ambiguous/contradictory → raise as open question.
 

@@ -28,6 +28,7 @@ One-shot. Single pass.
 - **Infrastructure before features** — no UX on shaky infra.
 - **Project philosophy** — whatever's in CLAUDE.md.
 - **No over-engineering** — no enterprise patterns for own sake. Lightweight justified deps fine.
+- **Open questions are real questions** — each must be a substantive call only the user's intent, taste, or priorities can settle. Flag as a finding any item that is really a request for approval: "confirm this direction", "approve X before implementation proceeds", "the design reserved this call so the user confirms here", "sign off that the earlier answer still holds", or anything whose only answers are "yes, go ahead" and "no, change it". The doc already goes to a user gate — approval is the workflow, not a question, and asking for it wastes the user's attention. A derivation that eliminated every alternative belongs in the doc as a stated decision with its reasoning, not as a question. Same for anything the code could answer.
 
 ## Reviewing a delta doc
 

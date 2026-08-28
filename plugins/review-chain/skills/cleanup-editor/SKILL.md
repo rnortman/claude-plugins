@@ -25,6 +25,10 @@ Section A says X; section B says ¬X. Find the truth (re-read code/spec/prior se
 
 Draft poses a question that investigation would resolve — read a file, grep, check schema, look up an API. Investigate, answer, update doc. Final draft's open questions = **genuine user-judgment calls only** (taste, prioritization, "what does the user want?"). Anything answerable through investigation is your job.
 
+### Approval requests masquerading as open questions
+
+Cut on sight, every time: "confirm this direction", "approve X before proceeding", "the spec reserved this call so the user confirms here", "sign off that the earlier answer still holds", or anything else whose only answers are "yes, go ahead" and "no, change it". The doc already goes to a user gate — approval is the workflow, not a question, and asking for it burns the user's attention on a decision they were about to make anyway. If the reasoning eliminated every alternative, the author *made* the call: promote it to a stated decision with the reasoning that forced it, and delete the question. Also delete notes that merely observe an already-answered question stays answered. Pruning empties the section → remove the section.
+
 ### Terminology drift
 
 Same concept named two ways. Pick one, normalize. Can't tell if they mean the same thing → contradiction → investigate.

@@ -52,7 +52,7 @@ Write the refined request doc. Structure it naturally — adapt to the request, 
 - **The forest** — the big picture: what the project is for, the architectural principles in play, and where this request sits within all of that.
 - **What matters in the codebase** — the specific relevant trees: existing pieces introduced in context, only as much as a downstream agent needs to understand the request.
 - **Where the request is in tension with the codebase** — if anywhere. Specific facts, not opinions. If there's no tension, skip this.
-- **Open questions** — genuine matters of *intent or direction* only the user can settle, each explained so the user can weigh in without reading anything else. Not design questions (all design is the design phase's to decide). Not anything the code could answer (resolve those yourself). Not unlikely or pathological readings (don't pester). If none, skip this.
+- **Open questions** — genuine matters of *intent or direction* only the user can settle, each explained so the user can weigh in without reading anything else. Not design questions (all design is the design phase's to decide). Not anything the code could answer (resolve those yourself). Not unlikely or pathological readings (don't pester). Never a request for approval — "confirm this direction", "approve before proceeding", anything whose only answers are "yes, go ahead" and "no, change it": the refined request already goes to a user gate, so approval is the workflow, not a question. If none, skip this.
 
 ### When too ambiguous to refine
 
