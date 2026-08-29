@@ -15,6 +15,12 @@
       "source": "./plugins/setup-project",
       "version": "0.1.0",
       "description": "Optional bootstrap for review-chain: TODO.md template, orchestrator as default agent, generic CLAUDE.md section."
+    },
+    {
+      "name": "x-twitter-scraper",
+      "source": "./plugins/x-twitter-scraper",
+      "version": "0.1.0",
+      "description": "Plan Xquik X/Twitter data workflows with REST API routing, MCP setup, SDKs, webhooks, exports, monitoring, and confirmation-gated actions."
     }
   ]
 }
