@@ -29,8 +29,8 @@
 #   5. ~/.claude/review-chain-models.conf                     (user)
 #   (none) -> the model is left alone; the agent's frontmatter pin governs.
 #
-# <AGENT> is the agent name upper/snake-cased: requirements-refiner ->
-# REVIEW_CHAIN_MODEL_REQUIREMENTS_REFINER. The "review-chain:" spawn prefix is
+# <AGENT> is the agent name upper/snake-cased: comment-rewriter ->
+# REVIEW_CHAIN_MODEL_COMMENT_REWRITER. The "review-chain:" spawn prefix is
 # stripped before lookup, so config keys are bare names (implementer, designer).
 # The hook works for any subagent_type, but only review-chain agents ship a
 # generated config template (skills/configure-models/references/).

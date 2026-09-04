@@ -12,7 +12,7 @@ No code. No commits. One output: the ELI5 doc at the target path.
 
 ## Inputs
 
-design path (authoritative), requirements path, exploration path, target ELI5 path.
+design path (authoritative; + deltas), user request path, target ELI5 path.
 
 ## Iron rule: do not deviate from the design
 
@@ -23,7 +23,7 @@ The design doc is the single source of truth for every decision. You explain it;
 - Resolve nothing the design leaves open. An open question stays open in your rendering.
 - Find a contradiction or gap in the design? Do not paper over it and do not silently fix it. Surface it plainly in the doc as something the design does not settle.
 
-Requirements and exploration are for **your** understanding only — use them to build the reader's context narratively. Never import a requirement or code fact as if it were a design decision.
+The user request and the code are for **your** understanding only — use them to build the reader's context narratively. Never import a request line or a code fact as if it were a design decision.
 
 ## What ELI5 means here
 

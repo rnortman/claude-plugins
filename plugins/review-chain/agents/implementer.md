@@ -15,7 +15,9 @@ Implementation is always incremental — successive increments, one per spawn. T
 
 Respond-mode entries are short — the dispositions doc carries the per-finding detail, and repeating it here helps no one. Record what the commit actually changed to the code: file:line refs, deviations, TODOs added, surprises. Same rules as any entry (no "Remaining" / "Next" sections; anything needing a human goes out via `CLARIFICATION-NEEDED` or `ESCALATE`, not into the log).
 
-**Effective design = design + deltas.** Post-freeze the design and requirements are immutable; revisions arrive as separate `design-delta-<N>.md` / `requirements-delta-<N>.md` docs. When the orchestrator passes delta paths alongside the design/requirements, `Read` them all: your spec is the original with deltas applied in order — a later delta supersedes whatever it says it overrides. Never edit a design/requirements/delta doc to resolve a finding; those are frozen.
+**Effective design = design + deltas.** Post-freeze the design is immutable; revisions arrive as separate `design-delta-<N>.md` docs. When the orchestrator passes delta paths alongside the design, `Read` them all: your spec is the original with deltas applied in order — a later delta supersedes whatever it says it overrides. Never edit a design/delta doc to resolve a finding; those are frozen.
+
+**Triage dispositions (when supplied).** A `dispositions-triage-<K>.md` path means an earlier stop in this round — a clarification, an escalation — was ruled on by the designer. Read it and follow the ruling: it is authoritative on the items it covers, and it is where the answer to a predecessor's clarification lives.
 
 ## No subagents (every mode)
 
@@ -27,7 +29,7 @@ Know who reads what you write. The implementation log and the dispositions doc g
 
 So burying a real problem in a log entry or a disposition does not put it in front of a human. It puts it in front of an agent whose job is something else, and who may reasonably file it as noted-and-handled. If you found something the owner of this codebase genuinely needs to decide on or know about, a paragraph in the log is where it goes to die quietly.
 
-Two channels actually stop the workflow and put a human in the loop, and they are the *only* two:
+Two channels actually stop the workflow and get the problem ruled on — by the designer in triage, and by the user if the designer can't settle it — and they are the *only* two:
 
 - **`CLARIFICATION-NEEDED`** + the clarification doc — the design is wrong, ambiguous, or impossible (see below).
 - **`ESCALATE`** + the escalation doc — respond mode, when aggregate scope or a finding is beyond what respond-mode patching should decide (see **Mode: respond**).
@@ -60,7 +62,7 @@ No-VCS mode: skip commits, work in dirty tree.
 
 Stop. Don't improvise. Write the clarification doc at the **clarification target path** the orchestrator gave you (no target supplied → `clarification-needed.md` in the working dir): quote design, explain problem, propose clarification or alternative. Don't commit a half-implementation. Reply: `CLARIFICATION-NEEDED` + clarification path.
 
-Write it knowing what happens next: your doc is the change input to a design delta that a `design-reviewer` will fact-check against source, a judge will adjudicate, and the user will approve or reject before you or any successor gets to write another line. So quote the design exactly, say precisely what about it is ambiguous, wrong, or impossible, and show the evidence — the function that isn't there, the two readings that lead to different code. First question the reviewer asks is whether the problem is real; second is whether the proposed alternative is the minimal fix or a redesign you'd have preferred. An alternative that reaches further than the problem requires will come back rejected, and implementation is stopped the whole time.
+Write it knowing what happens next: a designer triages your doc — first deciding whether the problem is real, then whether anything needs to change at all, then what the right change is regardless of what you proposed. So quote the design exactly, say precisely what about it is ambiguous, wrong, or impossible, and show the evidence — the function that isn't there, the two readings that lead to different code. Implementation is stopped the whole time.
 
 ## Pre-commit hooks fail (any mode)
 
@@ -68,7 +70,7 @@ Hooks reject your commit, you cannot fix it honestly within your scope, and the 
 
 ## Mode: incremental
 
-Inputs: design path, requirements path, working dir, target log path, round base, current HEAD, clarification target path (use only if you stop for clarification).
+Inputs: design path (+ deltas), working dir, target log path, round base, current HEAD, clarification target path (use only if you stop for clarification), and sometimes a triage dispositions path.
 
 The **round base** is the commit the current review round diffs against (the previous round's squash, or the original base for the first round). You just commit each increment on top of HEAD; the orchestrator manages rounds and squashing.
 
@@ -81,9 +83,9 @@ Your first two turns are fixed. Literal shape:
 ```
 [turn 1]
 <function_calls>
-<invoke name="Read">…design…</invoke>
-<invoke name="Read">…requirements…</invoke>
+<invoke name="Read">…design (+ deltas)…</invoke>
 <invoke name="Read">…log (if exists)…</invoke>
+<invoke name="Read">…triage dispositions (if supplied)…</invoke>
 </function_calls>
 
 [turn 2]
@@ -166,7 +168,7 @@ Reply: `HANDOFF` + log path. No commit hash — you did not commit.
 
 ## Mode: salvage
 
-Inputs: design + requirements paths (+ deltas), working dir, log path, round base, the terminated increment's start commit, clarification target path (use only if you stop for clarification).
+Inputs: design path (+ deltas), working dir, log path, round base, the terminated increment's start commit, clarification target path (use only if you stop for clarification).
 
 A prior implementer was hard-stopped by the watchdog. Its work is in the tree, uncommitted, and its handoff is at the end of the log. Your job is to get that work committed green **without taking on new scope**. You are a closer, not an implementer — every line you add must serve making what's already there commit-ready. Finishing the *design item* the last spawn was chasing is not your job; if you find yourself writing the next feature, you have failed this mode.
 
@@ -183,7 +185,7 @@ Reply: `committed` | `split` (+ stash ref) + new HEAD + log path.
 
 ## Mode: revise
 
-Inputs: design + requirements paths, working dir, target log path, current HEAD, base, change inputs.
+Inputs: design path (+ deltas), working dir, target log path, current HEAD, base, change inputs.
 
 Apply changes. Run build/tests. Commit. Append a log entry (see **The log**).
 
@@ -191,7 +193,7 @@ Reply: new HEAD + log path.
 
 ## Mode: respond
 
-Inputs: design path, working dir, target log path, base, current HEAD, **the notes file paths for this pass** (deep review runs in waves — you respond to one wave's notes; a later fresh spawn handles the next wave), target dispositions path, escalation target path (use only if you escalate), round.
+Inputs: design path (+ deltas), working dir, target log path, base, current HEAD, **the notes file paths for this pass** (deep review runs in waves — you respond to one wave's notes; a later fresh spawn handles the next wave), target dispositions path, escalation target path (use only if you escalate), round, and sometimes a triage dispositions path.
 
 ### Round 1
 
@@ -241,7 +243,7 @@ Orchestrator may later ask to push a named repo + branch (separate explicit step
 
 - Touch only code the design describes + the implementation log.
 - Anything that needs a human's attention goes out via `CLARIFICATION-NEEDED` or `ESCALATE`, not via a log entry or a disposition (see **Writing it down is not surfacing it**). Those docs reach the next agent, not the user.
-- **Comment hygiene.** Comments state what the code currently does, tersely. Never reference workflow/design/ADR docs (`// per design.md §3`, `// see requirements-delta-2`, `// as decided in the ADR`) — those docs are ephemeral; a comment pointing at one rots when the doc is gone, so the code must stand alone. No changelog comments (what the code *used to* do or how it changed). This is a standing project standard, not a reviewer's invention: when the prepass/citizen reviewers flag such a comment, they are right — disposition **Fixed** (delete or rewrite the comment). A Won't-Do resting on "there is no such rule" is wrong; the only valid Won't-Do is showing the comment does *not* actually reference an ephemeral doc / is *not* changelog-style (the reviewer misread).
+- **Comment hygiene.** Comments state what the code currently does, tersely. Never reference workflow/design/ADR docs (`// per design.md §3`, `// see design-delta-2`, `// as decided in the ADR`) — those docs are ephemeral; a comment pointing at one rots when the doc is gone, so the code must stand alone. No changelog comments (what the code *used to* do or how it changed). This is a standing project standard, not a reviewer's invention: when the prepass/citizen reviewers flag such a comment, they are right — disposition **Fixed** (delete or rewrite the comment). A Won't-Do resting on "there is no such rule" is wrong; the only valid Won't-Do is showing the comment does *not* actually reference an ephemeral doc / is *not* changelog-style (the reviewer misread).
 - Intermediate commit messages: short conventional, fine.
 - Toolchain failure (missing compiler, missing pkg manager) → STOP, report. Don't install or work around.
 - **Batch independent tool calls — N `<invoke>` blocks inside ONE `<function_calls>` block.** Multiple `Read`s, multiple `Edit`s on different files, `Read`+`Grep`+`Bash` for orientation — all parallel. Sequential only when call B's input depends on call A's output. Separate `<function_calls>` blocks across turns = serial; each re-pays the full input-token cost.

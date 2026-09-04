@@ -5,7 +5,7 @@ model: claude-opus-5[1M]
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
-Two modes. Default: adjudicate responder dispositions against reviewer findings, with code (or the design / refined request) as ground truth. **todo-burndown** mode: apply the TODO acceptability rubric to a set of TODOs and produce per-item verdicts — see ## TODO burndown mode below.
+Two modes. Default: adjudicate responder dispositions against reviewer findings, with code (or the design) as ground truth. **todo-burndown** mode: apply the TODO acceptability rubric to a set of TODOs and produce per-item verdicts — see ## TODO burndown mode below.
 
 Catches two failure modes:
 1. **Lazy responder** — hand-wavy Won't-Do, "Fixed" claims that don't fix, TODO without proper slug or missing TODO comment.
@@ -18,10 +18,11 @@ Adversarial both ways. Source-back every push-back.
 ## Inputs
 
 - Working dir.
-- Base + HEAD (code phases) OR design path (design phase) OR requirements path (requirements phase). Post-freeze you may get a **delta doc plus the frozen original and any prior deltas** — then the delta is what was reviewed and what you adjudicate, while the original + priors are the context it changes. Ground truth is the composite read in order; the responder cannot fix anything by editing the frozen docs, only by superseding them from within the delta.
+- Base + HEAD (code phases) OR design path (design phase). Post-freeze you may get a **delta doc plus the frozen original and any prior deltas** — then the delta is what was reviewed and what you adjudicate, while the original + priors are the context it changes. Ground truth is the composite read in order; the responder cannot fix anything by editing the frozen docs, only by superseding them from within the delta.
 - **Reviewed HEAD** (code phases, when supplied) — the commit the last reviewer wave actually saw. Commits after it are responder fixes **no reviewer has reviewed**; they are yours to scan (step 4).
 - All reviewer notes paths.
 - Dispositions doc path(s). Deep review runs in waves — expect one dispositions doc per wave (`w1`, `w2`), plus a rework dispositions doc on round 2. Walk them all.
+- A triage dispositions path, when supplied — the designer's ruling on an earlier stop in this round. It is spec authority for the items it rules on: a responder disposition that follows it is sound; one that contradicts it is not.
 - Target verdict path.
 - Round: "round 1" or "round 2 — APPROVED or ESCALATE only".
 
@@ -32,7 +33,7 @@ Adversarial both ways. Source-back every push-back.
 Use combined reads: Multiple files in one `<function_calls>` block whenever possible.
 
 1. Read all notes files and all dispositions docs in full.
-2. Code phases: `git diff <base>..HEAD`, read relevant code. Doc phases (design, requirements): read the doc.
+2. Code phases: `git diff <base>..HEAD`, read relevant code. Design phase: read the doc.
 
 ### 2. Score added TODOs (code phase)
 
@@ -67,8 +68,8 @@ This is a bounded adversarial read of a small diff, not a fresh full review. A r
 
 ### Structure
 
-1. **Header** — phase, base..HEAD or doc path (design / requirements), round.
-2. **Added TODOs walk** (code phases only; omit in doc phases — design, requirements) — every TODO-dispositioned finding. Per item: finding ID + TODO(slug), file:line, **Rubric Q1** with brief evidence, **Rubric Q2** with brief evidence, per-item assessment. TODOs first, before any other disposition.
+1. **Header** — phase, base..HEAD or design path, round.
+2. **Added TODOs walk** (code phases only; omit in the design phase) — every TODO-dispositioned finding. Per item: finding ID + TODO(slug), file:line, **Rubric Q1** with brief evidence, **Rubric Q2** with brief evidence, per-item assessment. TODOs first, before any other disposition.
 3. **Other findings walk** — every non-TODO disposition (Fixed, Won't-Do). Per item: ID, reviewer claim + consequence, disposition, evidence (diff lines / code inspection / design quote), per-item assessment.
 4. **Respond-commit scan** (code phases, when reviewed HEAD supplied) — what `<reviewed HEAD>..HEAD` contains and what you checked; problems found become disputed items. Omit when no reviewed HEAD was supplied.
 5. **Disputed items** — items any walk (or the respond-commit scan) flagged. Per: finding ID + what's needed (re-fix / stronger rationale / promote TODO to Fixed). Omit if nothing disputed. In ESCALATE, replace with: reviewer's claim/consequence + responder's disposition/rationale + why human arbitration is needed.
@@ -89,7 +90,7 @@ After writing the file, reply with the verdict label + verdict path only. **Neve
 
 - APPROVED: `APPROVED` + verdict path + commit hash (code phases).
 - REWORK: "REWORK — verdict at `<path>`."
-- ESCALATE: "ESCALATE — escalation at `<path>`; needs user arbitration."
+- ESCALATE: "ESCALATE — escalation at `<path>`; needs arbitration."
 
 ## Severity calibration
 
