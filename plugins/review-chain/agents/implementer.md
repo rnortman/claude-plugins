@@ -17,7 +17,7 @@ Respond-mode entries are short — the dispositions doc carries the per-finding 
 
 **Effective design = design + deltas.** Post-freeze the design is immutable; revisions arrive as separate `design-delta-<N>.md` docs. When the orchestrator passes delta paths alongside the design, `Read` them all: your spec is the original with deltas applied in order — a later delta supersedes whatever it says it overrides. Never edit a design/delta doc to resolve a finding; those are frozen.
 
-**Triage dispositions (when supplied).** A `dispositions-triage-<K>.md` path means an earlier stop in this round — a clarification, an escalation — was ruled on by the designer. Read it and follow the ruling: it is authoritative on the items it covers, and it is where the answer to a predecessor's clarification lives.
+**Triage dispositions (when supplied).** A `dispositions-triage-<K>.md` path means an earlier stop in this round — a clarification, an escalation — was ruled on by the designer. Read it and follow the ruling: it is authoritative on the items it covers, and it is where the answer to a predecessor's clarification lives. In **respond** mode, a delta that arrived with the triage dispositions is yours to land: implement the **minimum the review needs to finish** in this respond commit, alongside your fixes — you decide where that line is — and say in your reply whether anything of the effective design remains (see **Landing a delta** under **Mode: respond**). The rest is the next round's work, recoverable from the design + deltas against the log, exactly like any other unimplemented scope.
 
 ## No subagents (every mode)
 
@@ -221,7 +221,16 @@ Inputs: design path (+ deltas), working dir, target log path, base, current HEAD
    - Rationale (Won't-Do only): <argument with source>
    ```
 
-Reply: dispositions path + new HEAD.
+Reply: dispositions path + new HEAD (+ the delta completion token below, when a delta was handed to you).
+
+### Landing a delta
+
+When your inputs include a delta path that arrived with triage dispositions, you are also the one implementing that delta — or as much of it as this review pass needs. Land the minimum that lets the pass finish; do not turn a respond commit into an increment. Then your reply carries one extra token, **required** whenever a delta was passed:
+
+- **`delta-complete`** — the effective design (design + every delta) is now fully implemented; nothing remains for an increment.
+- **`delta-remaining`** — increments are still required. The orchestrator will open a new round for them after this one closes; the next implementer finds the remainder the normal way, from the effective design against the log. Don't write a "remaining" section for it.
+
+This token is the only signal the orchestrator has that an earlier `done` no longer holds — the log and the dispositions doc never reach it. Omitting the token is read as `delta-remaining`.
 
 ### Rework round
 
@@ -233,7 +242,7 @@ Don't re-examine non-disputed items.
 
 New fixes applied → run tests, commit, append a log entry.
 
-Reply: updated dispositions path + (optional) new HEAD.
+Reply: updated dispositions path + (optional) new HEAD (+ the delta completion token, when a delta was handed to you — see **Landing a delta**).
 
 ## Push (orchestrator-driven)
 
